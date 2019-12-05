@@ -13,7 +13,7 @@ func DecodeDeviceCreateRequest(ctx context.Context, r *http.Request) (interface{
 	vars := mymux.Vars(r)
 	var deviceid string
 
-	token := r.Header["token"]
+	token := r.Header.Get("token")
 	fmt.Println("获得的token为", token)
 
 	if id, ok := vars["deviceid"]; ok {
@@ -29,7 +29,15 @@ func DecodeDeviceCreateRequest(ctx context.Context, r *http.Request) (interface{
 	return struct {
 		Token               string
 		Devicecreaterequest *DeviceCreateRequest
-	}{}, nil
+	}{
+		Token: token,
+		Devicecreaterequest: &DeviceCreateRequest{
+			Deviceid: deviceid,
+			Isnode:   newdevice.Isnode,
+			Devtype:  newdevice.Devtype,
+			Title:    newdevice.Title,
+		},
+	}, nil
 
 }
 
