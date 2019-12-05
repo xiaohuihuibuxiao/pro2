@@ -3,6 +3,7 @@ package Services
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,9 @@ import (
 func DecodeDeviceCreateRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	vars := mymux.Vars(r)
 	var deviceid string
+
+	token := r.Header["token"]
+	fmt.Println("获得的token为", token)
 
 	if id, ok := vars["deviceid"]; ok {
 		deviceid = id
@@ -22,12 +26,10 @@ func DecodeDeviceCreateRequest(ctx context.Context, r *http.Request) (interface{
 		Title   string `json:"title"`
 	}
 	json.Unmarshal(body, &newdevice)
-	return &DeviceCteateRequest{
-		Deviceid: deviceid,
-		Isnode:   newdevice.Isnode,
-		Devtype:  newdevice.Devtype,
-		Title:    newdevice.Title,
-	}, nil
+	return struct {
+		Token               string
+		Devicecreaterequest *DeviceCreateRequest
+	}{}, nil
 
 }
 

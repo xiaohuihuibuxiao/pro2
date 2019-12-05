@@ -6,7 +6,7 @@ import (
 )
 
 //--新建设备--
-type DeviceCteateRequest struct {
+type DeviceCreateRequest struct {
 	Deviceid string `json:"deviceid"`
 	Isnode   bool   `json:"isnode"`
 	Devtype  int64  `json:"devtype"`
