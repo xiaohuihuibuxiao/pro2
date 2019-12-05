@@ -1,19 +1,25 @@
 package main
 
 import (
-	"github.com/astaxie/beego"
 	httptransport "github.com/go-kit/kit/transport/http"
+	mymux "github.com/gorilla/mux"
 	"net/http"
 	. "pro2/Services"
 )
 
 func main() {
 
-	user := UserService{}
-	endp := GenUserEndpoint(user)
+	//user := UserService{}
+	//endp := GenUserEndpoint(user)
+	//serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse)
 
-	serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse)
-	app := beego.Handler("/user/login", serverHanlder)
+	user := UserLoginService{}
+	endp_user := UserLoginEndpoint(user)
+	serverHanlder := httptransport.NewServer(endp_user, DecodeUserLoginRequest, EncodeuUserLoginResponse)
+	r := mymux.NewRouter()
+	//	r.Handle(`/user/{uid:\d+}`,serverHanlder)
+	r.Methods("GET").Path(`/user/login/{name}`).Handler(serverHanlder)
 
-	http.ListenAndServe(":8080", app.Handlers)
+	http.ListenAndServe(":8080", r)
+
 }
