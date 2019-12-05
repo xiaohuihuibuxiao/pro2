@@ -13,12 +13,48 @@ func main() {
 	//endp := GenUserEndpoint(user)
 	//serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse)
 
-	user := UserLoginService{}
-	endp_user := UserLoginEndpoint(user)
-	serverHanlder := httptransport.NewServer(endp_user, DecodeUserLoginRequest, EncodeuUserLoginResponse)
+	//---登陆----
+	userlogin := UserLoginService{}
+	endp_user := UserLoginEndpoint(userlogin)
 	r := mymux.NewRouter()
+	userlogin_handler := httptransport.NewServer(endp_user, DecodeUserLoginRequest, EncodeuUserLoginResponse)
 	//	r.Handle(`/user/{uid:\d+}`,serverHanlder)
-	r.Methods("GET").Path(`/user/login/{name}`).Handler(serverHanlder)
+	r.Methods("POST").Path(`/user/login/{userid}`).Handler(userlogin_handler)
+
+	//--创建新用户--
+	usercreats := UserCreateService{}
+	endp_usercreate := UserCreateEndpoint(usercreats)
+	r2 := mymux.NewRouter()
+	usercreate_handler := httptransport.NewServer(endp_usercreate, DecodeUserCreateRequest, EncodeuUserCreateResponse)
+	r2.Methods("POST").Path(`/user/register`).Handler(usercreate_handler)
+
+	//---新建设备---
+
+	//---查询设备--
+
+	//--删除设备--
+
+	//--修改设备--
+
+	//--绑定设备--
+
+	//--解绑设备--
+
+	//--设备上报数据--
+
+	//--创建空间--
+
+	//--查询空间--
+
+	//--删除空间--
+
+	//--修改空间--
+
+	//--给空间添加设备--
+
+	//--清除空间信息--
+
+	//--复制空间---
 
 	http.ListenAndServe(":8080", r)
 

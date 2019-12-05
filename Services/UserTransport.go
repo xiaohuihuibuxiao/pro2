@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
@@ -28,30 +27,57 @@ func EncodeUserResponse(ctx context.Context, w http.ResponseWriter, response int
 	return json.NewEncoder(w).Encode(response)
 }
 
-//---------------------------------------------------
+//------------------登陆---------------------------------
 
 func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	userid := r.URL.Query().Get("userid") //TODO 这个是从？后面去读参数，即接口的param内容
-	password := r.URL.Query().Get("password")
-	fmt.Println("userid,pwd", userid, password)
+	var userid string = ""
 	vars := mymux.Vars(r)
-	if name, ok := vars["name"]; ok {
-		fmt.Println("name", name)
+	if user, ok := vars["userid"]; ok {
+		userid = user
 	}
-	bodu, _ := ioutil.ReadAll(r.Body)
-	var aa struct {
-		Name string `json:"name"`
+	body, _ := ioutil.ReadAll(r.Body)
+	var bodyinfo struct {
+		Password string `json:"password"`
 	}
-	json.Unmarshal(bodu, &aa)
-	fmt.Println("body", bodu)
-
-	return &UserLoginRequest{
+	json.Unmarshal(body, &bodyinfo)
+	password := bodyinfo.Password
+	a := &UserLoginRequest{
 		Userid:   userid,
 		Password: password,
-	}, nil
+	}
+	return a, nil
 }
 
 func EncodeuUserLoginResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//----------------新建用户----------
+func DecodeUserCreateRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+
+	body, _ := ioutil.ReadAll(r.Body)
+	var newuser struct {
+		Userid   string `json:"userid"`
+		Password string `json:"password"`
+		Phone    string `json:"phone"`
+		Email    string `json:"email"`
+		Title    string `json:"title"`
+		Nickname string `json:"nickname"`
+	}
+	json.Unmarshal(body, &newuser)
+	a := &UserCreateRequest{
+		Userid:   newuser.Userid,
+		Password: newuser.Password,
+		Phone:    newuser.Phone,
+		Email:    newuser.Email,
+		Title:    newuser.Title,
+		Nickname: newuser.Nickname,
+	}
+	return a, nil
+}
+
+func EncodeuUserCreateResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }
