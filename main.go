@@ -3,17 +3,16 @@ package main
 import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"net/http"
-	. "service.jtthink.com/Services"
+	. "pro2/Services"
 )
 
-func main()  {
+func main() {
 
-	user:= UserService{}
-	endp:= GenUserEndpoint(user)
+	user := UserService{}
+	endp := GenUserEndpoint(user)
 
-	serverHanlder:=httptransport.NewServer(endp,DecodeUserRequest,EncodeUserResponse)
+	serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse)
 
-
-	http.ListenAndServe(":8080",serverHanlder)
+	http.ListenAndServe(":8080", serverHanlder)
 
 }
