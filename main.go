@@ -8,15 +8,10 @@ import (
 )
 
 func main() {
-
-	//user := UserService{}
-	//endp := GenUserEndpoint(user)
-	//serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse)
-
-	//---登陆----
+	r := mymux.NewRouter()
+	//--登陆--
 	userlogin := UserLoginService{}
 	endp_user := UserLoginEndpoint(userlogin)
-	r := mymux.NewRouter()
 	userlogin_handler := httptransport.NewServer(endp_user, DecodeUserLoginRequest, EncodeuUserLoginResponse)
 	//	r.Handle(`/user/{uid:\d+}`,serverHanlder)
 	r.Methods("POST").Path(`/user/login/{userid}`).Handler(userlogin_handler)
@@ -24,12 +19,14 @@ func main() {
 	//--创建新用户--
 	usercreats := UserCreateService{}
 	endp_usercreate := UserCreateEndpoint(usercreats)
-	r2 := mymux.NewRouter()
 	usercreate_handler := httptransport.NewServer(endp_usercreate, DecodeUserCreateRequest, EncodeuUserCreateResponse)
-	r2.Methods("POST").Path(`/user/register`).Handler(usercreate_handler)
+	r.Methods("POST").Path(`/user/register`).Handler(usercreate_handler)
 
 	//---新建设备---
-
+	devicecreate := DeviceCreateService{}
+	ep_devicecreats := DeviceCreateEndpoint(devicecreate)
+	devicecreate_handler := httptransport.NewServer(ep_devicecreats, DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
+	r.Methods("GET").Path(`/device/{deviceid}`).Handler(devicecreate_handler)
 	//---查询设备--
 
 	//--删除设备--
