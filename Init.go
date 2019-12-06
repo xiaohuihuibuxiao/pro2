@@ -55,12 +55,24 @@ func Init() *mymux.Router {
 	r.Methods("POST").Path(`/device/upload/{deviceid}`).Handler(deviceupload_handler)                       //--上报数据--ok
 
 	spacecreate := SpaceCreateService{}
+	spacequery := SpaceQueryService{}
+	spacerevise := SpaceReviseService{}
+	spacedel := SpaceDelService{}
 
 	ep_spacescreate := SpaceCreateEndpoint(spacecreate)
+	ep_spacequery := SpaceQueryEndpoint(spacequery)
+	ep_spacerevise := SpaceReviseEndpoint(spacerevise)
+	ep_spacedel := SpaceDelEndpoint(spacedel)
 
 	spacecreate_handler := httptransport.NewServer(ep_spacescreate, DecodeSpaceCreateRequest, EncodeSpaceCreateReponse)
+	spacequery_handler := httptransport.NewServer(ep_spacequery, DecodeSpaceQUeryRequest, EncodeSpaceQueryReponse)
+	spacerevise_handler := httptransport.NewServer(ep_spacerevise, DecodeSpaceReviseRequest, EncodeSpaceReviseReponse)
+	spacedel_handler := httptransport.NewServer(ep_spacedel, DecodeDelReviseRequest, EncodeSpaceDelReponse)
 
-	r.Methods("POST").Path(`/space`).Handler(spacecreate_handler) //--创建空间--ok
+	r.Methods("POST").Path(`/space`).Handler(spacecreate_handler)      //--创建空间--ok
+	r.Methods("GET").Path(`/space/{sid}`).Handler(spacequery_handler)  //--查询空间--ok
+	r.Methods("PUT").Path(`/space/{sid}`).Handler(spacerevise_handler) //--修改空间--ok
+	r.Methods("DELETE").Path(`/space/{sid}`).Handler(spacedel_handler) //--修改空间--ok
 
 	//--创建空间--
 

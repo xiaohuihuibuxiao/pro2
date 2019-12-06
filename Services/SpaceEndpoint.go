@@ -27,3 +27,46 @@ func SpaceCreateEndpoint(spacecreateservice WSpaceCreateService) endpoint.Endpoi
 		return result, nil
 	}
 }
+
+//--查询空间--
+type SpaceQueryRequest struct {
+	Token string `json:"token"`
+	Sid   string `json:"deviceid"`
+}
+
+func SpaceQueryEndpoint(spacequeryservice WSpaceQueryService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*SpaceQueryRequest)
+		result := spacequeryservice.QuerySpace(r)
+		return result, nil
+	}
+}
+
+//--修改空间--
+type SpaceReviseRequest struct {
+	Title string `json:"title"`
+	Token string `json:"token"`
+	Sid   string `json:"sid"`
+}
+
+func SpaceReviseEndpoint(spacereviseservice WSpaceReviseService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*SpaceReviseRequest)
+		result := spacereviseservice.ReviseSapce(r)
+		return result, nil
+	}
+}
+
+//--删除空间--
+type SpaceDelRequest struct {
+	Token string `json:"token"`
+	Sid   string `json:"sid"`
+}
+
+func SpaceDelEndpoint(spacereviseservice WSpaceDelService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*SpaceDelRequest)
+		result := spacereviseservice.DelSapce(r)
+		return result, nil
+	}
+}

@@ -3,6 +3,7 @@ package Services
 import (
 	"context"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 )
@@ -42,6 +43,54 @@ func DecodeSpaceCreateRequest(ctx context.Context, r *http.Request) (interface{}
 }
 
 func EncodeSpaceCreateReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//--查询空间--
+func DecodeSpaceQUeryRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return &SpaceQueryRequest{
+		Sid:   mux.Vars(r)["sid"],
+		Token: r.Header.Get("token"),
+	}, nil
+}
+
+func EncodeSpaceQueryReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//--修改空间--
+func DecodeSpaceReviseRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var bodyinfo struct {
+		Title string `json:"title"`
+	}
+	body, _ := ioutil.ReadAll(r.Body)
+	err := json.Unmarshal(body, &bodyinfo)
+	if err != nil {
+		return nil, err
+	}
+	return &SpaceReviseRequest{
+		Title: bodyinfo.Title,
+		Token: r.Header.Get("token"),
+		Sid:   mux.Vars(r)["sid"],
+	}, nil
+}
+
+func EncodeSpaceReviseReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//--删除空间--
+func DecodeDelReviseRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return &SpaceReviseRequest{
+		Token: r.Header.Get("token"),
+		Sid:   mux.Vars(r)["sid"],
+	}, nil
+}
+
+func EncodeSpaceDelReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }
