@@ -56,13 +56,34 @@ func EncodeDeviceQueryReponse(ctx context.Context, w http.ResponseWriter, respon
 
 //--删除设备--
 func DecodeDeviceDeleteRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	return &DeviceQueryRequest{
+	return &DeviceDeleteRequest{
 		Token:    r.Header.Get("token"),
 		Deviceid: mymux.Vars(r)["deviceid"],
 	}, nil
 }
 
 func EncodeDeviceDeleteReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//--修改设备--
+func DecodeDeviceReviseRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var bodyinfo struct {
+		Title  string                 `json:"title"`
+		Expand map[string]interface{} `json:"expand"`
+	}
+	body, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal(body, &bodyinfo)
+	return &DeviceReviseRequest{
+		Token:    r.Header.Get("token"),
+		Deviceid: mymux.Vars(r)["deviceid"],
+		Expand:   bodyinfo.Expand,
+		Title:    bodyinfo.Title,
+	}, nil
+}
+
+func EncodeDeviceReviseReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }

@@ -2,6 +2,7 @@ package Services
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"pro2/Baseinfo"
@@ -60,6 +61,7 @@ type WDeviceQueryService interface {
 type DeviceQUeryService struct{}
 
 func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonResponse {
+	fmt.Println("进入查询设备")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 
@@ -190,5 +192,73 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 
 	response.Code = Baseinfo.Success
 	response.Data = deletecount
+	return response
+}
+
+//--修改设备--
+type WDeviceReviseService interface {
+	ReviseDevice(r *DeviceReviseRequest) *CommonResponse
+}
+type DeviceReviseService struct{}
+
+func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResponse {
+	fmt.Println("进入修改设备")
+	response := &CommonResponse{}
+	col_device := Baseinfo.Client.Database("test").Collection("device")
+
+	err_checktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	if err_checktoken != nil {
+		response.Code = Baseinfo.CONST_TOEKN_INVALID
+		response.Msg = err_checktoken.Error()
+		return response
+	}
+	var device *Baseinfo.Device
+	id, err_obj := primitive.ObjectIDFromHex(r.Deviceid)
+	if err_obj == nil {
+		//传入的是id
+		err_find := col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&device)
+		if device == nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = err_find.Error()
+			return response
+		}
+		if tokenuser != device.Userid {
+			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+			response.Msg = "no authority to delete another user' device !"
+			return response
+		}
+		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
+			{"title", r.Title},
+			{"expand", r.Expand},
+		}}})
+		if err_upd != nil {
+			response.Code = Baseinfo.CONST_UPDATE_FAIL
+			response.Msg = err_upd.Error()
+			return response
+		}
+	} else {
+		//传入的是devid
+		err_find := col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&device)
+		if device == nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = err_find.Error()
+			return response
+		}
+		if tokenuser != device.Userid {
+			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+			response.Msg = "no authority to delete another user' device !"
+			return response
+		}
+		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}, bson.D{{"$set", bson.D{
+			{"title", r.Title},
+			{"expand", r.Expand},
+		}}})
+		if err_upd != nil {
+			response.Code = Baseinfo.CONST_UPDATE_FAIL
+			response.Msg = err_upd.Error()
+			return response
+		}
+	}
+	response.Code = Baseinfo.Success
 	return response
 }

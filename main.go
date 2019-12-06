@@ -27,17 +27,21 @@ func main() {
 	ep_devicecreats := DeviceCreateEndpoint(devicecreate)
 	devicecreate_handler := httptransport.NewServer(ep_devicecreats, DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
 	r.Methods("POST").Path(`/device/{deviceid}`).Handler(devicecreate_handler)
-	//---查询设备--ok
-	deviceQuery := DeviceQUeryService{}
-	ep_devicequery := DeviceQueryEndpoint(deviceQuery)
-	devicequery_handler := httptransport.NewServer(ep_devicequery, DecodeDeviceQueryRequest, EncodeDeviceQueryReponse)
-	r.Name("GET").Path(`/device/{deviceid}`).Handler(devicequery_handler)
-	//--删除设备--
+	//--删除设备--ok 差修改space信息
 	devicedelete := DeviceDeleteService{}
 	ep_devicedelete := DeviceDeleteEndpoint(devicedelete)
 	devicedelete_handler := httptransport.NewServer(ep_devicedelete, DecodeDeviceDeleteRequest, EncodeDeviceDeleteReponse)
 	r.Methods("DELETE").Path(`/device/{deviceid}`).Handler(devicedelete_handler)
-	//--修改设备--
+	//---查询设备--ok
+	deviceQuery := DeviceQUeryService{}
+	ep_devicequery := DeviceQueryEndpoint(deviceQuery)
+	devicequery_handler := httptransport.NewServer(ep_devicequery, DecodeDeviceQueryRequest, EncodeDeviceQueryReponse)
+	r.Methods("GET").Path(`/device/{deviceid}`).Handler(devicequery_handler)
+	//--修改设备--ok
+	devicerevise := DeviceReviseService{}
+	ep_devicerevise := DeviceReviseEndpoint(devicerevise)
+	devicerevise_handler := httptransport.NewServer(ep_devicerevise, DecodeDeviceReviseRequest, EncodeDeviceReviseReponse)
+	r.Methods("PUT").Path(`/device/{deviceid}`).Handler(devicerevise_handler)
 
 	//--绑定设备--
 
