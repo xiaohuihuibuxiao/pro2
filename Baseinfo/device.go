@@ -29,38 +29,91 @@ type Device struct {
 }
 
 //解绑设备方法
-func UnboundDevice(pcode, kind string, col *mongo.Collection) (errcode int64, errmsg, data interface{}) {
-	filter := bson.D{{"pcode", pcode}}
+func UnboundDeviceBydeviceid(dev *Device, kind string, col_dev, col_space *mongo.Collection) (errcode int64, errmsg string, data interface{}) {
+	filter := bson.D{{"deviceid", dev.Deviceid}}
 	var update bsonx.Doc
 
 	switch kind {
 	case "0":
 		update = bsonx.Doc{{"$set", bsonx.Document(
-			bsonx.Doc{{"ccode", bsonx.String("")},
+			bsonx.Doc{{"gatewayid", bsonx.String("")},
 				{"userid", bsonx.String("")},
-				{"hid", bsonx.ObjectID(primitive.NilObjectID)},
+				{"sid", bsonx.ObjectID(primitive.NilObjectID)},
 				{"addr", bsonx.String("")},
+				{"spacecode", bsonx.String("")},
 			})}}
-		RemoveDev() //TODO 同步space表中国的devid，一起删掉 !!!!!!!!!!!!!!
+		if dev.Sid != primitive.NilObjectID {
+			RemoveDev(dev.Sid, dev.Id, col_space)
+		}
+
 	case "1":
 		update = bsonx.Doc{{"$set", bsonx.Document(
 			bsonx.Doc{{"userid", bsonx.String("")}})}}
 	case "2":
 		update = bsonx.Doc{{"$set", bsonx.Document(
-			bsonx.Doc{{"ccode", bsonx.String("")}})}}
+			bsonx.Doc{{"gatewayid", bsonx.String("")}})}}
 	case "3":
 		update = bsonx.Doc{{"$set", bsonx.Document(
-			bsonx.Doc{{"hid", bsonx.ObjectID(primitive.NilObjectID)}, {"addr", bsonx.String("")}})}}
-		RemoveDev() //TODO !!!!!!!!!!!!!!!!!
+			bsonx.Doc{
+				{"sid", bsonx.ObjectID(primitive.NilObjectID)},
+				{"addr", bsonx.String("")},
+				{"spacecode", bsonx.String("")},
+			})}}
+		if dev.Sid != primitive.NilObjectID {
+			RemoveDev(dev.Sid, dev.Id, col_space)
+		}
 	default:
-		return CONST_PARAM_ERROR, "type is out of range", nil
+		return CONST_PARAM_ERROR, "operate type is out of range", nil
 	}
-	var dev *Device
-	err := col.FindOneAndUpdate(context.Background(), filter, update).Decode(&dev)
+	var device *Device
+	err := col_dev.FindOneAndUpdate(context.Background(), filter, update).Decode(&device)
 	if err != nil {
-		return Fail, err, nil
+		return Fail, err.Error(), nil
 	}
-	return Success, nil, dev
+	return Success, "", device
+}
+
+func UnboundDeviceByid(dev *Device, kind string, col_dev, col_space *mongo.Collection) (errcode int64, errmsg string, data interface{}) {
+	filter := bson.D{{"_id", dev.Id}}
+	var update bsonx.Doc
+
+	switch kind {
+	case "0":
+		update = bsonx.Doc{{"$set", bsonx.Document(
+			bsonx.Doc{{"gatewayid", bsonx.String("")},
+				{"userid", bsonx.String("")},
+				{"sid", bsonx.ObjectID(primitive.NilObjectID)},
+				{"addr", bsonx.String("")},
+				{"spacecode", bsonx.String("")},
+			})}}
+		if dev.Sid != primitive.NilObjectID {
+			RemoveDev(dev.Sid, dev.Id, col_space)
+		}
+	case "1":
+		update = bsonx.Doc{{"$set", bsonx.Document(
+			bsonx.Doc{{"userid", bsonx.String("")}})}}
+	case "2":
+		update = bsonx.Doc{{"$set", bsonx.Document(
+			bsonx.Doc{{"gatewayid", bsonx.String("")}})}}
+	case "3":
+		update = bsonx.Doc{{"$set", bsonx.Document(
+			bsonx.Doc{
+				{"sid", bsonx.ObjectID(primitive.NilObjectID)},
+				{"addr", bsonx.String("")},
+				{"spacecode", bsonx.String("")},
+			})}}
+		if dev.Sid != primitive.NilObjectID {
+			RemoveDev(dev.Sid, dev.Id, col_space)
+		}
+	default:
+		return CONST_PARAM_ERROR, "operatie type is out of range", nil
+	}
+	var device *Device
+	err := col_dev.FindOneAndUpdate(context.Background(), filter, update).Decode(&device)
+	if err != nil {
+		return Fail, err.Error(), nil
+	}
+	return Success, "", dev
 }
 
 func Unbounduser() {

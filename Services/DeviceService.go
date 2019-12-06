@@ -2,7 +2,7 @@ package Services
 
 import (
 	"context"
-	"fmt"
+	"github.com/astaxie/beego/logs"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"pro2/Baseinfo"
@@ -61,7 +61,6 @@ type WDeviceQueryService interface {
 type DeviceQUeryService struct{}
 
 func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonResponse {
-	fmt.Println("进入查询设备")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 
@@ -202,7 +201,6 @@ type WDeviceReviseService interface {
 type DeviceReviseService struct{}
 
 func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResponse {
-	fmt.Println("进入修改设备")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 
@@ -256,6 +254,274 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		if err_upd != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = err_upd.Error()
+			return response
+		}
+	}
+	response.Code = Baseinfo.Success
+	return response
+}
+
+//--绑定设备--
+
+type WDeviceBindService interface {
+	BindDevice(r *DeviceBindRequest) *CommonResponse
+}
+type DeviceBindService struct{}
+
+func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
+	response := &CommonResponse{}
+	col_device := Baseinfo.Client.Database("test").Collection("device")
+	col_space := Baseinfo.Client.Database("test").Collection("space")
+
+	err_checktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	if err_checktoken != nil {
+		response.Code = Baseinfo.CONST_TOEKN_INVALID
+		response.Msg = err_checktoken.Error()
+		return response
+	}
+	deviceid := r.Deviceid
+	sid := r.Sid
+	gatewayid := r.Gatewayid
+	userid := r.Userid
+
+	if deviceid == "" {
+		response.Code = Baseinfo.CONST_PARAM_LACK
+		response.Msg = "deviceid can't be nil!"
+		return response
+	}
+
+	if tokenuser != userid && userid != "" {
+		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+		response.Msg = "logining user and binding user is unmathced!"
+		return response
+	}
+
+	var dev *Baseinfo.Device
+	id, err_obj := primitive.ObjectIDFromHex(deviceid)
+	var isid bool
+	if err_obj == nil {
+		isid = true
+		err_find := col_device.FindOne(context.Background(), bson.M{"_id": id}).Decode(&dev)
+		if dev == nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = err_find.Error()
+			return response
+		}
+	} else {
+		isid = false
+		err_find := col_device.FindOne(context.Background(), bson.M{"deviceid": deviceid}).Decode(&dev)
+		if dev == nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = err_find.Error()
+			return response
+		}
+	}
+
+	//绑定账号
+	if userid != "" {
+		if dev.Userid != "" {
+			response.Code = Baseinfo.CONST_PARAM_ERROR
+			response.Msg = "device has been bound!"
+			return response
+		}
+		if isid {
+			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
+			if err_upd != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = err_upd.Error()
+				return response
+			}
+		} else {
+			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
+			if err_upd != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = err_upd.Error()
+				return response
+			}
+		}
+	}
+	//sid为真实有效的id时，绑定房源
+	if sid_obj, err := primitive.ObjectIDFromHex(sid); err != nil {
+		var devids []primitive.ObjectID
+		var space *Baseinfo.Space
+		col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&space)
+		if space == nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = "find no space by sid!" //包含房源不存在的情况
+			return response
+		}
+		devids = space.Devids
+		devids = append(devids, sid_obj)
+		//更新space表
+		_, err_upd := col_space.UpdateOne(context.Background(), bson.D{{"_id", sid_obj}}, bson.D{{"$set", devids}})
+		if err_upd != nil {
+			response.Code = Baseinfo.CONST_UPDATE_FAIL
+			response.Msg = err_upd.Error()
+			return response
+		}
+		//跟新device表
+		if isid {
+			_, err_update := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"sid", sid_obj}}}})
+			if err_update != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = err_update.Error()
+				return response
+			}
+		} else {
+			_, err1 := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
+			if err1 != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = err1.Error()
+				return response
+			}
+		}
+
+	}
+	if gatewayid != "" {
+		if isid {
+			_, err := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"gatewayid", gatewayid}}}})
+			if err != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = err.Error()
+				return response
+			}
+		} else {
+			_, err := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"gatewayid", gatewayid}}}})
+			if err != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = err.Error()
+				return response
+			}
+		}
+	}
+
+	response.Code = Baseinfo.Success
+	return response
+}
+
+//--解绑设备--
+type WDeviceUnboundService interface {
+	UnboundDevice(r *DeviceUnboundRequest) *CommonResponse
+}
+type DeviceUnboundService struct{}
+
+func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonResponse {
+	response := &CommonResponse{}
+	col_device := Baseinfo.Client.Database("test").Collection("device")
+	col_space := Baseinfo.Client.Database("test").Collection("space")
+
+	err_checktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	if err_checktoken != nil {
+		response.Code = Baseinfo.CONST_TOEKN_INVALID
+		response.Msg = err_checktoken.Error()
+		return response
+	}
+	deviceid := r.Deviceid
+	kind := r.Type
+
+	var errcode int64
+	var errmsg string
+	var data interface{}
+	id, err_obj := primitive.ObjectIDFromHex(deviceid)
+	if err_obj == nil {
+		var dev *Baseinfo.Device
+		col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&dev)
+		if dev == nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = "find no device!"
+			return response
+		}
+		if tokenuser != dev.Userid {
+			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+			response.Msg = "cant't operate another user' device!"
+			return response
+		}
+		errcode, errmsg, data = Baseinfo.UnboundDeviceByid(dev, kind, col_device, col_space)
+
+	} else {
+		var dev *Baseinfo.Device
+		col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&dev)
+		if dev == nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = "find no device!"
+			return response
+		}
+		if tokenuser != dev.Userid {
+			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+			response.Msg = "cant't operate another user' device!"
+			return response
+		}
+		errcode, errmsg, data = Baseinfo.UnboundDeviceBydeviceid(dev, kind, col_device, col_space)
+	}
+	response.Code = errcode
+	response.Msg = errmsg
+	response.Data = data
+	return response
+}
+
+//--上报数据--
+type WDeviceUploadService interface {
+	UploadData(r *DeviceUploadRequest) *CommonResponse
+}
+type DeviceUploadService struct{}
+
+func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonResponse {
+	response := &CommonResponse{}
+	col_device := Baseinfo.Client.Database("test").Collection("device")
+	col_history := Baseinfo.Client.Database("test").Collection("history")
+
+	deviceid := r.Deviceid
+
+	history := &Baseinfo.Sensorhistory{
+		Userid:   r.Userid,
+		Deviceid: r.Deviceid,
+		Devtype:  r.Devtype,
+		//UPloadtime:    time.Now().Format("2006-01-02 15:04:05"),
+		UPloadtime: r.T,
+		Expand:     r.Data,
+		External:   nil,
+	}
+	//记录至history表
+	_, err_ins := col_history.InsertOne(context.Background(), history)
+	if err_ins != nil {
+		logs.Info("fail to inset to history ")
+		response.Code = Baseinfo.CONST_INSERT_FAIL
+		response.Msg = err_ins.Error()
+		return response
+	}
+
+	//跟新device表的expand
+	id, err_obj := primitive.ObjectIDFromHex(deviceid)
+	if err_obj == nil {
+		filter := bson.D{{"_id", id}}
+		update := bson.D{{"$set", bson.D{{"expand", &struct {
+			T    string
+			Data interface{}
+		}{
+			T:    r.T,
+			Data: r.Data,
+		},
+		}}}}
+		updateresult := col_device.FindOneAndUpdate(context.Background(), filter, update)
+		if updateresult.Err() != nil {
+			response.Code = Baseinfo.CONST_UPDATE_FAIL
+			response.Msg = updateresult.Err().Error()
+			return response
+		}
+	} else {
+		filter := bson.D{{"deviceid", deviceid}}
+		update := bson.D{{"$set", bson.D{{"expand", &struct {
+			T    string
+			Data interface{}
+		}{
+			T:    r.T,
+			Data: r.Data,
+		},
+		}}}}
+		updateresult := col_device.FindOneAndUpdate(context.Background(), filter, update)
+		if updateresult.Err() != nil {
+			response.Code = Baseinfo.CONST_UPDATE_FAIL
+			response.Msg = updateresult.Err().Error()
 			return response
 		}
 	}

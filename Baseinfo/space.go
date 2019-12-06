@@ -26,8 +26,18 @@ func AddDev(hid primitive.ObjectID, devids []primitive.ObjectID) error {
 	return nil
 }
 
-func RemoveDev() {
-
+func RemoveDev(sid, devid primitive.ObjectID, col *mongo.Collection) {
+	var devids []primitive.ObjectID
+	var s *Space
+	col.FindOne(context.Background(), bson.D{{"_id", sid}}).Decode(&s)
+	if s != nil {
+		for _, v := range s.Devids {
+			if v != devid {
+				devids = append(devids, v)
+			}
+		}
+	}
+	col.UpdateOne(context.Background(), bson.D{{"_id", sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
 }
 
 func RemoveSpace(s *Space, col *mongo.Collection) (int64, interface{}) {

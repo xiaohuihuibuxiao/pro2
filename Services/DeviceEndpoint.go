@@ -66,3 +66,52 @@ func DeviceReviseEndpoint(devicereviseservice WDeviceReviseService) endpoint.End
 		return result, nil
 	}
 }
+
+//--绑定设备--
+type DeviceBindRequest struct {
+	Token     string `json:"token"`
+	Userid    string `json:"userid"`
+	Deviceid  string `json:"deviceid"`
+	Sid       string `json:"sid"`
+	Gatewayid string `json:"gatewayid"`
+}
+
+func DeviceBindEndpoint(devicebinservice WDeviceBindService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*DeviceBindRequest)
+		result := devicebinservice.BindDevice(r)
+		return result, nil
+	}
+}
+
+//--解绑设备--
+type DeviceUnboundRequest struct {
+	Token    string `json:"token"`
+	Deviceid string `json:"deviceid"`
+	Type     string `json:"type"`
+}
+
+func DeviceUnboundEndpoint(deviceunboundservice WDeviceUnboundService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*DeviceUnboundRequest)
+		result := deviceunboundservice.UnboundDevice(r)
+		return result, nil
+	}
+}
+
+//--上报数据--
+type DeviceUploadRequest struct {
+	Deviceid string      `json:"deviceid"`
+	T        string      `json:"t"`
+	Userid   string      `json:"userid"`
+	Devtype  int         `json:"devtype"`
+	Data     interface{} `json:"data"`
+}
+
+func DeviceUploadEndpoint(deviceuploadservice WDeviceUploadService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*DeviceUploadRequest)
+		result := deviceuploadservice.UploadData(r)
+		return result, nil
+	}
+}

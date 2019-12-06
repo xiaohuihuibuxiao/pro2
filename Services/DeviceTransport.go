@@ -87,3 +87,58 @@ func EncodeDeviceReviseReponse(ctx context.Context, w http.ResponseWriter, respo
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }
+
+//--绑定设备--
+func DecodeDeviceBindRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return &DeviceBindRequest{
+		Token:     r.Header.Get("token"),
+		Deviceid:  mymux.Vars(r)["deviceid"],
+		Gatewayid: mymux.Vars(r)["gatewayid"],
+		Sid:       mymux.Vars(r)["sid"],
+		Userid:    mymux.Vars(r)["userid"],
+	}, nil
+}
+
+func EncodeDeviceBindReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//--解绑设备--
+func DecodeDeviceUnboundRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	//t, _ := strconv.Atoi(mymux.Vars(r)["type"])
+	return &DeviceUnboundRequest{
+		Token:    r.Header.Get("token"),
+		Deviceid: mymux.Vars(r)["deviceid"],
+		Type:     mymux.Vars(r)["type"],
+	}, nil
+}
+
+func EncodeDeviceUnboundReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//--上传数据--
+func DecodeDeviceUploadRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var bodyinfo struct {
+		T       string      `json:"t"`
+		Userid  string      `json:"userid"`
+		Devtype int         `json:"devtype"`
+		Data    interface{} `json:"data"`
+	}
+	body, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal(body, &bodyinfo)
+	return &DeviceUploadRequest{
+		Deviceid: mymux.Vars(r)["deviceid"],
+		T:        bodyinfo.T,
+		Userid:   bodyinfo.Userid,
+		Devtype:  bodyinfo.Devtype,
+		Data:     bodyinfo.Data,
+	}, nil
+}
+
+func EncodeDeviceUploadReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
