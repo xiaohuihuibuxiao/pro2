@@ -2,6 +2,7 @@ package Services
 
 import (
 	"context"
+	"fmt"
 	"github.com/astaxie/beego/logs"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,6 +18,7 @@ type WDeviceCreateService interface {
 type DeviceCreateService struct{}
 
 func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonResponse {
+	fmt.Println("1")
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	response := &CommonResponse{}
 
@@ -61,6 +63,7 @@ type WDeviceQueryService interface {
 type DeviceQUeryService struct{}
 
 func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonResponse {
+	fmt.Println("2")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 
@@ -111,6 +114,7 @@ type DeviceDeleteService struct{}
 
 //不考虑网关的删除和相关影响 TODO 清除sid信息暂未验证
 func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResponse {
+	fmt.Println("3")
 	var deletecount int64
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
@@ -201,6 +205,7 @@ type WDeviceReviseService interface {
 type DeviceReviseService struct{}
 
 func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResponse {
+	fmt.Println("4")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 
@@ -269,6 +274,7 @@ type WDeviceBindService interface {
 type DeviceBindService struct{}
 
 func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
+	fmt.Println("5")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	col_space := Baseinfo.Client.Database("test").Collection("space")
@@ -406,6 +412,7 @@ type WDeviceUnboundService interface {
 type DeviceUnboundService struct{}
 
 func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonResponse {
+	fmt.Println("6")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	col_space := Baseinfo.Client.Database("test").Collection("space")
@@ -466,6 +473,7 @@ type WDeviceUploadService interface {
 type DeviceUploadService struct{}
 
 func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonResponse {
+	fmt.Println("7")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	col_history := Baseinfo.Client.Database("test").Collection("history")
@@ -473,6 +481,7 @@ func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonRespon
 	deviceid := r.Deviceid
 
 	history := &Baseinfo.Sensorhistory{
+		Id:       primitive.NewObjectIDFromTimestamp(time.Now()),
 		Userid:   r.Userid,
 		Deviceid: r.Deviceid,
 		Devtype:  r.Devtype,

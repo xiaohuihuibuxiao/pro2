@@ -2,7 +2,6 @@ package Baseinfo
 
 import (
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -42,23 +41,21 @@ func RemoveDev(sid, devid primitive.ObjectID, col *mongo.Collection) {
 
 func RemoveSpace(s *Space, col *mongo.Collection) (int64, interface{}) {
 	masterspace := s.Master
-	fmt.Println("自己的spaceid", s.Id, "读取到的master为", masterspace)
+	//fmt.Println("自己的spaceid", s.Id, "读取到的master为", masterspace)
 	_, err := col.DeleteOne(context.Background(), bson.M{"_id": s.Id})
 	if err != nil {
 		return CONST_DELETE_FAIL, err.Error()
 	}
 	if masterspace != nil || len(masterspace) > 0 {
-		fmt.Println("masterspace不为空")
 		for _, nextspaceid := range masterspace {
-			fmt.Println("当前循环的spaceid", nextspaceid)
 			var nextsapce *Space
 			nextsid, _ := primitive.ObjectIDFromHex(nextspaceid)
 			col.FindOne(context.Background(), bson.D{{"_id", nextsid}}).Decode(&nextsapce)
 			if nextsapce != nil {
-				fmt.Println("即将下一级循环", nextsapce.Id, nextsapce.Master)
+				//	fmt.Println("即将下一级循环", nextsapce.Id, nextsapce.Master)
 				errcode, errmsg := RemoveSpace(nextsapce, col)
 				if errmsg != nil {
-					fmt.Println("出错了，将返回数据", errcode, errmsg)
+					//	fmt.Println("出错了，将返回数据", errcode, errmsg)
 					return errcode, errmsg
 				}
 			}
@@ -69,20 +66,20 @@ func RemoveSpace(s *Space, col *mongo.Collection) (int64, interface{}) {
 }
 
 func GetFirstPartCode(mergename string, col *mongo.Collection) (int64, interface{}, string, *Dictionary) {
-	fmt.Println("获取第一段时，输入的mergename ", mergename, col.Name())
+	//	fmt.Println("获取第一段时，输入的mergename ", mergename, col.Name())
 	var dic *Dictionary
 	err := col.FindOne(context.Background(), bson.D{{"mergername", mergename}}).Decode(&dic)
 	if err != nil {
 		return CONST_FIND_FAIL, err, "-1", nil
 	}
-	fmt.Println("获取第一段1111", dic)
+	//	fmt.Println("获取第一段1111", dic)
 	return Success, nil, dic.Code, dic
 }
 
 func GetSecondPartCode(upperdic *Dictionary, district, building, storey, room, place string, level int, col *mongo.Collection) (int64, interface{}, string) {
 	errcode, errmsg, r, updistrictcode, name, upname := GetInfomation(upperdic, level, district, building, storey, room, place, col)
-	fmt.Println("GetInfomation 函数返回的结果为 errcode", errcode, "errmsg", errmsg, "updistrictcode", updistrictcode, "name", name)
-	fmt.Println("r", r)
+	//fmt.Println("GetInfomation 函数返回的结果为 errcode", errcode, "errmsg", errmsg, "updistrictcode", updistrictcode, "name", name)
+	//fmt.Println("r", r)
 	if errcode != Success {
 		return errcode, errmsg, ""
 	} else {
@@ -116,13 +113,11 @@ func GetInfomation(dic *Dictionary, level int, district, building, storey, room,
 		return
 	case 6:
 		_, _, upr := FindDistrictBymergename(dic.Mergername+","+district+","+building, col)
-		fmt.Println("upr----", upr == nil, upr.Code, upr.Mergeaddr, upr.Dicaddr, upr.Parentcode)
+		//fmt.Println("upr----", upr == nil, upr.Code, upr.Mergeaddr, upr.Dicaddr, upr.Parentcode)
 		errcode, errmsg, r = FindDistrict(dic.Code, upr.Code, storey, 6, col)
 		if r != nil {
-			fmt.Println("111")
 			updistrictcode = r.Parentcode
 		} else { //TODO 默认上一级level区域肯定是存在的
-			fmt.Println("2222")
 			updistrictcode = upr.Code
 		}
 		name = storey

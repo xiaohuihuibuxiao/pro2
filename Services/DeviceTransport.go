@@ -121,11 +121,13 @@ func EncodeDeviceUnboundReponse(ctx context.Context, w http.ResponseWriter, resp
 
 //--上传数据--
 func DecodeDeviceUploadRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+
 	var bodyinfo struct {
-		T       string      `json:"t"`
-		Userid  string      `json:"userid"`
-		Devtype int         `json:"devtype"`
-		Data    interface{} `json:"data"`
+		Deviceid string      `json:"deviceid"`
+		T        string      `json:"t"`
+		Userid   string      `json:"userid"`
+		Devtype  int         `json:"devtype"`
+		Data     interface{} `json:"data"`
 	}
 	body, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(body, &bodyinfo)

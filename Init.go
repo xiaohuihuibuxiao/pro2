@@ -51,8 +51,16 @@ func Init() *mymux.Router {
 	r.Methods("GET").Path(`/device/{deviceid}`).Handler(devicequery_handler)                                //---查询设备--ok
 	r.Methods("PUT").Path(`/device/{deviceid}`).Handler(devicerevise_handler)                               //--修改设备--ok
 	r.Methods("PUT").Path(`/device/bind/{deviceid}/{userid}/{sid}/{gatewayid}`).Handler(devicebind_handler) //--绑定--TODO 未测试
-	r.Methods("PUT").Path(`device/unbound/{deviceid}/{type}`).Handler(deviceunbound_handler)                //--解绑--TODO 未测试
-	r.Methods("POST").Path(`device/upload/{deviceid}`).Handler(deviceupload_handler)                        //--上报数据--
+	r.Methods("PUT").Path(`/device/unbound/{deviceid}/{type}`).Handler(deviceunbound_handler)               //--解绑--TODO 未测试
+	r.Methods("POST").Path(`/device/upload/{deviceid}`).Handler(deviceupload_handler)                       //--上报数据--ok
+
+	spacecreate := SpaceCreateService{}
+
+	ep_spacescreate := SpaceCreateEndpoint(spacecreate)
+
+	spacecreate_handler := httptransport.NewServer(ep_spacescreate, DecodeSpaceCreateRequest, EncodeSpaceCreateReponse)
+
+	r.Methods("POST").Path(`/space`).Handler(spacecreate_handler) //--创建空间--ok
 
 	//--创建空间--
 

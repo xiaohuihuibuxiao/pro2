@@ -27,7 +27,7 @@ type District struct {
 //创建新district（园区 楼 层室 工位）
 func NewDistrict(updistrictcode string, dic *Dictionary, name, upname string, level int, col *mongo.Collection) (int64, interface{}, string) {
 	//name 新建区域的名字 upditrictcode 上级区域的code(不同level的c上级code不一样)
-	fmt.Println("新建区域时传入的参数为", "", updistrictcode, "dic", dic.Code, "name", name, "level", level)
+	//fmt.Println("新建区域时传入的参数为", "", updistrictcode, "dic", dic.Code, "name", name, "level", level)
 	opt := options.Find().SetSort(bson.D{{"code", -1}}) //按照code倒序，查询目前该level，该diccode下的区域情况
 	curror, err_d := col.Find(context.Background(), bson.D{
 		{"level", level},
@@ -47,10 +47,10 @@ func NewDistrict(updistrictcode string, dic *Dictionary, name, upname string, le
 	}
 	curror.Close(context.Background())
 	//此时已拿到全部数据
-	fmt.Println("拿到的数据有", len(allDis), "个")
+	//fmt.Println("拿到的数据有", len(allDis), "个")
 	largestcode := Getnewcode(updistrictcode, level, allDis)
 
-	fmt.Println("largestcode", largestcode)
+	//fmt.Println("largestcode", largestcode)
 	newmergeaddr := Getnewmergeaddr(level, dic, updistrictcode, upname, col)
 	//填补新district的信息
 	newdistrict := &District{
@@ -63,7 +63,7 @@ func NewDistrict(updistrictcode string, dic *Dictionary, name, upname string, le
 		Dictionarycode: dic.Code,
 		Dicaddr:        dic.Mergername,
 	}
-	fmt.Println("新区域的信息为", newdistrict.Code, "||", newdistrict.Parentcode, "||", newdistrict.Level)
+	//fmt.Println("新区域的信息为", newdistrict.Code, "||", newdistrict.Parentcode, "||", newdistrict.Level)
 	insert_r, err := col.InsertOne(context.Background(), newdistrict)
 	if err != nil {
 		return CONST_INSERT_FAIL, err.Error(), ""
@@ -79,34 +79,33 @@ func NewDistrict(updistrictcode string, dic *Dictionary, name, upname string, le
 //---------------------------------------------------------------
 func Getnewcode(updistrictcode string, level int, allDis []*District) (largestcode string) {
 	//updic--所属省市区的数据，在level位4且需要新建区域时会用到
-	fmt.Println("Getnewcode函数输入为 updistrictcode", updistrictcode, "level", level)
-	fmt.Println("alldis", len(allDis))
+	//fmt.Println("Getnewcode函数输入为 updistrictcode", updistrictcode, "level", level)
+	//fmt.Println("alldis", len(allDis))
 	if len(allDis) > 0 { //在该level下已经存在空间，code+1
-		fmt.Println("找到了数据")
 		num, _ := strconv.Atoi(allDis[0].Code)                                   //TODO 万一是99了怎么处理？？？？------------------------
 		largestcode = strconv.Itoa(num + 1*int(math.Pow(100, float64(8-level)))) //+1 +100 +10000...
 		if len([]rune(largestcode)) == 9 {                                       //只可能出现9位或10位，10位不需要动。TODO 出现其他位数的话肯定是有问题！！！！
 			largestcode = "0" + largestcode
 		}
-		fmt.Println("输出的新code位", largestcode)
-		fmt.Println("返回前的largestcode", largestcode)
+		//fmt.Println("输出的新code位", largestcode)
+		//fmt.Println("返回前的largestcode", largestcode)
 		return largestcode
 	} else {
-		fmt.Println("没找到数据，需要创建") //没找到，code就是它上级的code（xxx0000）开始加1 ，xxx0100
+		//	fmt.Println("没找到数据，需要创建") //没找到，code就是它上级的code（xxx0000）开始加1 ，xxx0100
 		num, _ := strconv.Atoi(updistrictcode)
 		num = num + 1*int(math.Pow(100, float64(8-level)))
 		largestcode := strconv.Itoa(num)
 		if len([]rune(largestcode)) == 9 { //只可能出现9位或10位，10位不需要动。TODO 出现其他位数的话肯定是有问题！！！！
 			largestcode = "0" + largestcode
 		}
-		fmt.Println("输出的新code位", largestcode)
-		fmt.Println("返回前的largestcode", largestcode)
+		//fmt.Println("输出的新code位", largestcode)
+		//fmt.Println("返回前的largestcode", largestcode)
 		return largestcode
 	}
 }
 
 func Getnewmergeaddr(level int, dic *Dictionary, updistrictcode, upname string, col *mongo.Collection) string {
-	fmt.Println("Getnewmergeaddr函数输入为 level", level, "dic", dic.Mergername, dic.Code, "upname", upname, "updistrictcode", updistrictcode)
+	//fmt.Println("Getnewmergeaddr函数输入为 level", level, "dic", dic.Mergername, dic.Code, "upname", upname, "updistrictcode", updistrictcode)
 	if level == 4 {
 		fmt.Println("返回的地址为0", dic.Mergername)
 		return dic.Mergername
@@ -123,7 +122,7 @@ func Getnewmergeaddr(level int, dic *Dictionary, updistrictcode, upname string, 
 			fmt.Println("getnewmergeaddr err", err)
 			return "find_error"
 		}
-		fmt.Println("返回的地址为1", r.Mergeaddr)
+		//fmt.Println("返回的地址为1", r.Mergeaddr)
 		return r.Mergeaddr
 	}
 }

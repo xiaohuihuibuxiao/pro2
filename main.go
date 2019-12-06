@@ -8,5 +8,5 @@ import (
 func main() {
 	r := Init()
 	log.Println("server starts ...")
-	http.ListenAndServe(":8080", r)
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
