@@ -2,7 +2,6 @@ package Baseinfo
 
 import (
 	"errors"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
@@ -42,7 +41,7 @@ func Authtoken(tokenString string) (bool, error, string) {
 		return false, errors.New("token is invalid"), ""
 	} else {
 		claims := token.Claims.(jwt.MapClaims)
-		fmt.Println(claims["sub"])
+		//fmt.Println(claims["sub"])
 		local, _ := time.LoadLocation("Local")
 		t, _ := time.ParseInLocation("2006-01-02 15:04:05", claims["exp"].(string)[:10]+" "+claims["exp"].(string)[11:19], local)
 		if t.Unix() < time.Now().Unix() {
