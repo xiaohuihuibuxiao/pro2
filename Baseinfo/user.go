@@ -32,7 +32,7 @@ func Loginauth(user, pwd string) (string, int64, error) {
 	if userinfo.Password != pwd {
 		return "", CONST_USERPWD_UNMATCH, errors.New("please check your userid or password !")
 	}
-
+	//TODO 需要用新的生成topken函数
 	token, err_token := Gentoken(user)
 	if err_token != nil {
 		return "", CONST_TOEKN_ERROR, err_token

@@ -22,7 +22,6 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	response := &CommonResponse{}
 
-	//TODO how to get token
 	token := r.Token
 	err_checktoken, _ := Baseinfo.Logintokenauth(token)
 	if err_checktoken != nil {

@@ -1,19 +1,51 @@
 package main
 
 import (
+	"fmt"
+	kitlog "github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 	mymux "github.com/gorilla/mux"
+	"os"
 	. "pro2/Services"
+
+	"golang.org/x/time/rate"
 )
 
 func Init() *mymux.Router {
+
+	var logger kitlog.Logger
+	{
+		logger = kitlog.NewLogfmtLogger(os.Stdout)
+		logger = kitlog.WithPrefix(logger, "mykit", "1.0")
+		logger = kitlog.With(logger, "time", kitlog.DefaultTimestampUTC)
+		logger = kitlog.With(logger, "caller", kitlog.DefaultCaller)
+	}
+
+	//---其实就是用于用户登陆的 可以改写下 利用其限流器
+	user := UserService{} //用户服务
+	limit := rate.NewLimiter(1, 5)
+	endp := RateLimit(limit)((CheckTokenMiddleware()(GenUserEndpoint(user)))) //这个可以改写用户登陆接口 限制登陆次数
+	//endp:=RateLimit(limit)(UserServiceLogMiddleware(logger)(CheckTokenMiddleware()(GenUserEndpoint(user))))
+
+	options := []httptransport.ServerOption{
+		httptransport.ServerErrorEncoder(MyErrorEncoder), //????
+	}
+	serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse, options...)
+	fmt.Println(serverHanlder)
+
+	////增加handler 用于获取用户token
+	//accessService:=&AccessService{}
+	//accessServiceEndpoint:=AccessEndpoint(accessService)
+	//accessHandler:=httptransport.NewServer(accessServiceEndpoint,DecodeAccessRequest,EncodeAccessResponse,options...)//只是用于生成token，已有该功能
+	//
+
 	r := mymux.NewRouter()
 
 	//---用户相关----
-	userlogin := UserLoginService{}
-	usercreats := UserCreateService{}
-	endp_user := UserLoginEndpoint(userlogin)
-	endp_usercreate := UserCreateEndpoint(usercreats)
+	//userlogin := UserLoginService{}
+	//usercreats := UserCreateService{}
+	endp_user := UserLoginEndpoint(UserLoginService{})
+	endp_usercreate := UserCreateEndpoint(UserCreateService{})
 	usercreate_handler := httptransport.NewServer(endp_usercreate, DecodeUserCreateRequest, EncodeuUserCreateResponse)
 	userlogin_handler := httptransport.NewServer(endp_user, DecodeUserLoginRequest, EncodeuUserLoginResponse)
 
@@ -22,21 +54,22 @@ func Init() *mymux.Router {
 	r.Methods("POST").Path(`/user/register`).Handler(usercreate_handler)      //--创建新用户--ok
 
 	//-----设备相关----
-	devicecreate := DeviceCreateService{}
-	devicedelete := DeviceDeleteService{}
-	deviceQuery := DeviceQUeryService{}
-	devicerevise := DeviceReviseService{}
-	devicebind := DeviceBindService{}
-	deviceunbound := DeviceUnboundService{}
-	deviceupload := DeviceUploadService{}
 
-	ep_devicecreats := DeviceCreateEndpoint(devicecreate)
-	ep_devicedelete := DeviceDeleteEndpoint(devicedelete)
-	ep_devicequery := DeviceQueryEndpoint(deviceQuery)
-	ep_devicerevise := DeviceReviseEndpoint(devicerevise)
-	ep_devicebind := DeviceBindEndpoint(devicebind)
-	ep_deviceunbound := DeviceUnboundEndpoint(deviceunbound)
-	ep_deviceupload := DeviceUploadEndpoint(deviceupload)
+	//devicecreate := DeviceCreateService{}
+	//devicedelete := DeviceDeleteService{}
+	//deviceQuery := DeviceQUeryService{}
+	//devicerevise := DeviceReviseService{}
+	//devicebind := DeviceBindService{}
+	//deviceunbound := DeviceUnboundService{}
+	//deviceupload := DeviceUploadService{}
+
+	ep_devicecreats := DeviceCreateEndpoint(DeviceCreateService{})
+	ep_devicedelete := DeviceDeleteEndpoint(DeviceDeleteService{})
+	ep_devicequery := DeviceQueryEndpoint(DeviceQUeryService{})
+	ep_devicerevise := DeviceReviseEndpoint(DeviceReviseService{})
+	ep_devicebind := DeviceBindEndpoint(DeviceBindService{})
+	ep_deviceunbound := DeviceUnboundEndpoint(DeviceUnboundService{})
+	ep_deviceupload := DeviceUploadEndpoint(DeviceUploadService{})
 
 	devicecreate_handler := httptransport.NewServer(ep_devicecreats, DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
 	devicedelete_handler := httptransport.NewServer(ep_devicedelete, DecodeDeviceDeleteRequest, EncodeDeviceDeleteReponse)
@@ -54,17 +87,17 @@ func Init() *mymux.Router {
 	r.Methods("PUT").Path(`/device/unbound/{deviceid}/{type}`).Handler(deviceunbound_handler)               //--解绑--TODO 未测试
 	r.Methods("POST").Path(`/device/upload/{deviceid}`).Handler(deviceupload_handler)                       //--上报数据--ok
 
-	spacecreate := SpaceCreateService{}
-	spacequery := SpaceQueryService{}
-	spacerevise := SpaceReviseService{}
-	spacedel := SpaceDelService{}
-	spaceclone := SpaceCloneService{}
+	//spacecreate := SpaceCreateService{}
+	//spacequery := SpaceQueryService{}
+	//spacerevise := SpaceReviseService{}
+	//spacedel := SpaceDelService{}
+	//spaceclone := SpaceCloneService{}
 
-	ep_spacescreate := SpaceCreateEndpoint(spacecreate)
-	ep_spacequery := SpaceQueryEndpoint(spacequery)
-	ep_spacerevise := SpaceReviseEndpoint(spacerevise)
-	ep_spacedel := SpaceDelEndpoint(spacedel)
-	ep_spaceclone := SpaceCloneEndpoint(spaceclone)
+	ep_spacescreate := SpaceCreateEndpoint(SpaceCreateService{})
+	ep_spacequery := SpaceQueryEndpoint(SpaceQueryService{})
+	ep_spacerevise := SpaceReviseEndpoint(SpaceReviseService{})
+	ep_spacedel := SpaceDelEndpoint(SpaceDelService{})
+	ep_spaceclone := SpaceCloneEndpoint(SpaceCloneService{})
 
 	spacecreate_handler := httptransport.NewServer(ep_spacescreate, DecodeSpaceCreateRequest, EncodeSpaceCreateReponse)
 	spacequery_handler := httptransport.NewServer(ep_spacequery, DecodeSpaceQUeryRequest, EncodeSpaceQueryReponse)
@@ -77,20 +110,8 @@ func Init() *mymux.Router {
 	r.Methods("PUT").Path(`/space/{sid}`).Handler(spacerevise_handler)       //--修改空间--ok
 	r.Methods("DELETE").Path(`/space/{sid}`).Handler(spacedel_handler)       //--删除空间--ok
 	r.Methods("POST").Path(`/space/clone/{sid}`).Handler(spaceclone_handler) //--复制空间--ok
-
-	//--创建空间--
-
-	//--查询空间--
-
-	//--删除空间--
-
-	//--修改空间--
-
 	//--给空间添加设备--
-
 	//--清除空间信息--
-
-	//--复制空间---
 
 	return r
 }

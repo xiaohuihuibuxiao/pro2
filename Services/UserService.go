@@ -9,12 +9,12 @@ import (
 )
 
 type IUserService interface {
-	GetName(userid int) string
+	GetName(userid string) string
 }
 type UserService struct{}
 
-func (this UserService) GetName(userid int) string {
-	if userid == 101 {
+func (this UserService) GetName(userid string) string {
+	if userid == "101" {
 		return "shenyi"
 	}
 	return "guest"

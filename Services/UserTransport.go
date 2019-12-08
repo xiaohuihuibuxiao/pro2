@@ -7,22 +7,19 @@ import (
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
-	"strconv"
+	"pro2/util"
 )
 
 func DecodeUserRequest(c context.Context, r *http.Request) (interface{}, error) {
-	// http://localhost:xxx/?uid=101
-	if r.URL.Query().Get("uid") != "" {
-		uid, _ := strconv.Atoi(r.URL.Query().Get("uid"))
+	if mymux.Vars(r)["userid"] != "" {
 		return UserRequest{
-			Uid: uid,
+			Userid: mymux.Vars(r)["userid"],
 		}, nil
 	}
 	return nil, errors.New("参数错误")
 
 }
 func EncodeUserResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }
@@ -80,4 +77,18 @@ func DecodeUserCreateRequest(ctx context.Context, r *http.Request) (interface{},
 func EncodeuUserCreateResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
+}
+
+//------------------邪恶的分割线-----------------
+func MyErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
+	contentType, body := "text/plain; charset=utf-8", []byte(err.Error())
+	w.Header().Set("content-type", contentType)
+	if myerr, ok := err.(*util.MyError); ok {
+		w.WriteHeader(myerr.Code)
+		w.Write(body)
+	} else {
+		w.WriteHeader(500)
+		w.Write(body)
+	}
+
 }
