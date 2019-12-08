@@ -25,7 +25,7 @@ var Client *mongo.Client
 func init() {
 	v := &Config{}
 	//data,err:=ioutil.ReadFile("./config.json")//放在服务器上时 这么写路径
-	data, err := ioutil.ReadFile("D:/common_pro/src/pro2/Baseinfo/config.json")
+	data, err := ioutil.ReadFile("D:/code/xatt/pro2/Baseinfo/config.json")
 	if err != nil {
 		log.Fatal(err)
 		return

@@ -70,3 +70,19 @@ func SpaceDelEndpoint(spacereviseservice WSpaceDelService) endpoint.Endpoint {
 		return result, nil
 	}
 }
+
+//--复制空间--
+type SpaceCloneRequest struct {
+	Token string `json:"token"`
+	Sid   string `json:"sid"`
+}
+
+func SpaceCloneEndpoint(spacecloneservice WSpaceCloneService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*SpaceCloneRequest)
+		result := spacecloneservice.CloneSpace(r)
+		return result, nil
+	}
+}
+
+//--

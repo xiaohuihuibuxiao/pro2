@@ -83,7 +83,7 @@ func EncodeSpaceReviseReponse(ctx context.Context, w http.ResponseWriter, respon
 }
 
 //--删除空间--
-func DecodeDelReviseRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+func DecodeSpaceDelRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	return &SpaceReviseRequest{
 		Token: r.Header.Get("token"),
 		Sid:   mux.Vars(r)["sid"],
@@ -91,6 +91,19 @@ func DecodeDelReviseRequest(ctx context.Context, r *http.Request) (interface{}, 
 }
 
 func EncodeSpaceDelReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//--复制空间--
+func DecodeCloneRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return &SpaceReviseRequest{
+		Token: r.Header.Get("token"),
+		Sid:   mux.Vars(r)["sid"],
+	}, nil
+}
+
+func EncodeSpaceCloneReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }

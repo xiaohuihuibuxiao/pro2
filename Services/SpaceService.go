@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//--创建康健--
+//--创建空间--
 type WSpaceCreateService interface {
 	NewSpace(r *SpaceCreateRequest) *CommonResponse
 }
@@ -252,4 +252,15 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	response.Code = e
 	response.Msg = m.(error).Error()
 	return response
+}
+
+//--复制空间--
+type WSpaceCloneService interface {
+	CloneSpace(r *SpaceCloneRequest) *CommonResponse
+}
+type SpaceCloneService struct{}
+
+func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
+	return nil
+
 }
