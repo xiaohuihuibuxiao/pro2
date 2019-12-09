@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	kitlog "github.com/go-kit/kit/log"
 	httptransport "github.com/go-kit/kit/transport/http"
 	mymux "github.com/gorilla/mux"
+	"golang.org/x/time/rate"
 	"os"
 	. "pro2/Services"
-
-	"golang.org/x/time/rate"
 )
 
 func Init() *mymux.Router {
@@ -22,26 +20,30 @@ func Init() *mymux.Router {
 	}
 
 	//---其实就是用于用户登陆的 可以改写下 利用其限流器
-	user := UserService{} //用户服务
-	limit := rate.NewLimiter(1, 5)
-	endp := RateLimit(limit)((CheckTokenMiddleware()(GenUserEndpoint(user)))) //这个可以改写用户登陆接口 限制登陆次数
-	//endp:=RateLimit(limit)(UserServiceLogMiddleware(logger)(CheckTokenMiddleware()(GenUserEndpoint(user))))
+	///user := UserService{} //用户服务
+	//limit := rate.NewLimiter(1, 5)
+	//	endp := RateLimit(limit)((CheckTokenMiddleware()(GenUserEndpoint(user)))) //这个可以改写用户登陆接口 限制登陆次数
+	//	endp:=RateLimit(limit)(UserServiceLogMiddleware(logger)(CheckTokenMiddleware()(GenUserEndpoint(user))))
 
-	options := []httptransport.ServerOption{
-		httptransport.ServerErrorEncoder(MyErrorEncoder), //????
-	}
-	serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse, options...)
-	fmt.Println(serverHanlder)
+	///options := []httptransport.ServerOption{
+	//	httptransport.ServerErrorEncoder(MyErrorEncoder), //????
+	//}
+	//serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse, options...)
+	//fmt.Println(serverHanlder)
 
 	r := mymux.NewRouter()
-	r.Use()
 
 	//---用户相关----
-	usercreate_handler := httptransport.NewServer(UserCreateEndpoint(UserCreateService{}), DecodeUserCreateRequest, EncodeuUserCreateResponse)
-	userlogin_handler := httptransport.NewServer(UserLoginEndpoint(UserLoginService{}), DecodeUserLoginRequest, EncodeuUserLoginResponse)
-	//	r.Handle(`/user/{uid:\d+}`,serverHanlder)
+	user := UserLoginService{}
+	limit := rate.NewLimiter(1, 5) // 限制频繁登陆操作
+	endp := RateLimit(limit)(UserServiceLogMiddleware(logger)(UserLoginEndpoint(user)))
+	//userlogin_handler := httptransport.NewServer(UserLoginEndpoint(UserLoginService{}), DecodeUserLoginRequest, EncodeuUserLoginResponse)
+	userlogin_handler := httptransport.NewServer(endp, DecodeUserLoginRequest, EncodeuUserLoginResponse)
 	r.Methods("POST").Path(`/user/login/{userid}`).Handler(userlogin_handler) //--登陆--ok
-	r.Methods("POST").Path(`/user/register`).Handler(usercreate_handler)      //--创建新用户--ok
+
+	usercreate_handler := httptransport.NewServer(UserCreateEndpoint(UserCreateService{}), DecodeUserCreateRequest, EncodeuUserCreateResponse)
+	//	r.Handle(`/user/{uid:\d+}`,serverHanlder)
+	r.Methods("POST").Path(`/user/register`).Handler(usercreate_handler) //--创建新用户--ok
 
 	//-----设备相关----
 	devicecreate_handler := httptransport.NewServer(DeviceCreateEndpoint(DeviceCreateService{}), DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)

@@ -6,6 +6,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"golang.org/x/time/rate"
+	"pro2/Baseinfo"
 	"pro2/util"
 )
 
@@ -40,6 +41,8 @@ type CommonResponse struct {
 type UserLoginRequest struct {
 	Userid   string `json:"userid"`
 	Password string `json:"password"`
+	Method   string `json:"method"`
+	Url      string `json:"url"`
 }
 
 func UserLoginEndpoint(userloginService WUserLoginService) endpoint.Endpoint {
@@ -68,7 +71,7 @@ func UserCreateEndpoint(userCreateService WUserCreateService) endpoint.Endpoint 
 	}
 }
 
-//------------------------------------------
+//---------------------midware---------------------
 //加入限流功能的 中间件
 func RateLimit(limit *rate.Limiter) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
@@ -85,8 +88,12 @@ func RateLimit(limit *rate.Limiter) endpoint.Middleware {
 func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			r := request.(UserRequest)
-			logger.Log("method", r.Method, "event", "get user", "userid", r.Userid)
+			//	r := request.(UserRequest)
+			r := request.(*UserLoginRequest)
+			if r.Method != "GET" {
+				Baseinfo.RecordOperation(r.Url, r.Method)
+			}
+			logger.Log("method", r.Method, "event", "login", "url", r.Url)
 			return next(ctx, request)
 		}
 	}

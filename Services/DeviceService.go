@@ -18,7 +18,6 @@ type WDeviceCreateService interface {
 type DeviceCreateService struct{}
 
 func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonResponse {
-	fmt.Println("1")
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	response := &CommonResponse{}
 
@@ -62,7 +61,6 @@ type WDeviceQueryService interface {
 type DeviceQUeryService struct{}
 
 func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonResponse {
-	fmt.Println("2")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 
@@ -111,7 +109,7 @@ type WDeviceDeleteService interface {
 }
 type DeviceDeleteService struct{}
 
-//不考虑网关的删除和相关影响 TODO 清除sid信息暂未验证
+//不考虑网关的删除和相关影响
 func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResponse {
 	fmt.Println("3")
 	var deletecount int64
@@ -203,7 +201,6 @@ type WDeviceReviseService interface {
 type DeviceReviseService struct{}
 
 func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResponse {
-	fmt.Println("4")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 
@@ -497,7 +494,6 @@ type WDeviceUploadService interface {
 type DeviceUploadService struct{}
 
 func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonResponse {
-	fmt.Println("7")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	col_history := Baseinfo.Client.Database("test").Collection("history")
@@ -523,7 +519,7 @@ func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonRespon
 		return response
 	}
 
-	//跟新device表的expand
+	//更新device表的expand
 	id, err_obj := primitive.ObjectIDFromHex(deviceid)
 	if err_obj == nil {
 		filter := bson.D{{"_id", id}}

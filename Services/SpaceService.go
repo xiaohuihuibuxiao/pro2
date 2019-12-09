@@ -43,7 +43,6 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	}
 
 	errcode, errmsg, firstpartcode, areadic := Baseinfo.GetFirstPartCode("中国,"+province+","+city+","+area, col_dic)
-	//fmt.Println("获取第一段code", errcode, errmsg, firstpartcode)
 	if errmsg != nil {
 		response.Code = errcode
 		response.Msg = errmsg.(error).Error()
@@ -62,7 +61,6 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	place := r.Place
 
 	errcode1, errmsg1, secondpartcode := Baseinfo.GetSecondPartCode(areadic, district, building, storey, room, place, level, col_dis)
-	//	fmt.Println("获取第二段地址", errcode, errmsg, secondpartcode)
 	if errmsg1 != nil {
 		response.Code = errcode1
 		response.Msg = errmsg1.(error).Error()
@@ -94,7 +92,7 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 
 	newspace := &Baseinfo.Space{
 		Id:        primitive.NewObjectIDFromTimestamp(time.Now()),
-		Mastered:  upspaceid, //这个直接填上
+		Mastered:  upspaceid,
 		Master:    nil,
 		Devids:    nil,
 		Level:     int64(r.Level),
@@ -310,7 +308,7 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 		return response
 	}
 
-	//除了创建新的space，还需要创建新的district存储起来 TODO
+	//除了创建新的space，还需要创建新的district存储起来
 	err_newdis := Baseinfo.CreateDistrict(originlspace, col_dis, col_dic)
 	if err_newdis != nil {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER

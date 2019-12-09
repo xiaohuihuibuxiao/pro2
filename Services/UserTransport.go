@@ -41,6 +41,8 @@ func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, 
 	a := &UserLoginRequest{
 		Userid:   userid,
 		Password: password,
+		Method:   r.Method,
+		Url:      r.URL.String(),
 	}
 	return a, nil
 }

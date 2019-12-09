@@ -52,7 +52,6 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 	col_user := Baseinfo.Client.Database("test").Collection("user")
 
 	err_find := col_user.FindOne(context.Background(), bson.M{"userid": r.Userid}).Decode(&finduser)
-	//没有该用户时会提示mongo: no documents in result错误 这才是没问题
 	if err_find != nil && err_find.Error() != "mongo: no documents in result" {
 		commonresponse.Code = Baseinfo.CONST_FIND_FAIL
 		commonresponse.Msg = err_find.Error()
