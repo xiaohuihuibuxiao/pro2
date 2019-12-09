@@ -22,7 +22,7 @@ const (
 	CONST_TOEKN_ERROR      = 1013 //token过期或者无效
 	CONST_DATA_HASEXISTED  = 1015 //数据已存在
 	CONST_ACTION_UNALLOWED = 1016 //操作不允许
-	CONST_ACTION_UNEXISTED = 1017 //数据不存在
+	CONST_DATA_UNEXISTED   = 1017 //数据不存在
 )
 
 type Response struct {

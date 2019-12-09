@@ -33,13 +33,8 @@ func Init() *mymux.Router {
 	serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse, options...)
 	fmt.Println(serverHanlder)
 
-	////增加handler 用于获取用户token
-	//accessService:=&AccessService{}
-	//accessServiceEndpoint:=AccessEndpoint(accessService)
-	//accessHandler:=httptransport.NewServer(accessServiceEndpoint,DecodeAccessRequest,EncodeAccessResponse,options...)//只是用于生成token，已有该功能
-	//
-
 	r := mymux.NewRouter()
+	r.Use()
 
 	//---用户相关----
 	usercreate_handler := httptransport.NewServer(UserCreateEndpoint(UserCreateService{}), DecodeUserCreateRequest, EncodeuUserCreateResponse)
@@ -72,10 +67,11 @@ func Init() *mymux.Router {
 	spacedel_handler := httptransport.NewServer(SpaceDelEndpoint(SpaceDelService{}), DecodeSpaceDelRequest, EncodeSpaceDelReponse)
 	spaceclone_handler := httptransport.NewServer(SpaceCloneEndpoint(SpaceCloneService{}), DecodeCloneRequest, EncodeSpaceCloneReponse)
 
-	r.Methods("POST").Path(`/space`).Handler(spacecreate_handler)            //--创建空间--ok
-	r.Methods("GET").Path(`/space/{sid}`).Handler(spacequery_handler)        //--查询空间--ok
-	r.Methods("PUT").Path(`/space/{sid}`).Handler(spacerevise_handler)       //--修改空间--ok
-	r.Methods("DELETE").Path(`/space/{sid}`).Handler(spacedel_handler)       //--删除空间--ok
+	r.Methods("POST").Path(`/space`).Handler(spacecreate_handler)      //--创建空间--ok
+	r.Methods("GET").Path(`/space/{sid}`).Handler(spacequery_handler)  //--查询空间--ok
+	r.Methods("PUT").Path(`/space/{sid}`).Handler(spacerevise_handler) //--修改空间--ok
+	r.Methods("DELETE").Path(`/space/{sid}`).Handler(spacedel_handler) //--删除空间--ok--一般不要删除空间，需要换个空间的话
+	// 直接解绑设备然后新建空间再绑定就好
 	r.Methods("POST").Path(`/space/clone/{sid}`).Handler(spaceclone_handler) //--复制空间--ok TODO
 
 	return r

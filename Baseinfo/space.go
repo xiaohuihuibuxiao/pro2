@@ -2,6 +2,7 @@ package Baseinfo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -160,4 +161,31 @@ func Getaddr(s string, flag string) (str string) {
 		str = str + v
 	}
 	return str
+}
+
+//传入某空间的spacecode，返回上级sapce
+func FindMasteredSpace(spacecode string, level int64, col *mongo.Collection) (*Space, error) {
+	switch level {
+	case 4:
+		return nil, nil
+	case 5, 6, 7, 8:
+		upspacecode := spacecode[:((level-1)*2)] + GetZeros(2*(8-level+1))
+		var upspace *Space
+		err := col.FindOne(context.Background(), bson.D{{"spacecode", upspacecode}}).Decode(upspace)
+		if upspace == nil {
+			return nil, err
+		}
+		return upspace, nil
+	default:
+		return nil, errors.New("invalid level")
+	}
+
+}
+
+func GetZeros(n int64) string {
+	s := ""
+	for i := int64(0); i < n; i++ {
+		s = s + "0"
+	}
+	return s
 }

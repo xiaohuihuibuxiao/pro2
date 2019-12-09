@@ -2,6 +2,7 @@ package Baseinfo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,6 +23,7 @@ type District struct {
 	Level          int    //1-xx园区/小区  2-xx楼 3-xx层 4-xx室/公共区域（如会议室） 5-xx工位
 	Dictionarycode string //省市区的code，即dictionary
 	Dicaddr        string //所属省市区的地址
+	Title          string
 }
 
 //创建新district（园区 楼 层室 工位）
@@ -74,6 +76,30 @@ func NewDistrict(updistrictcode string, dic *Dictionary, name, upname string, le
 	}
 	col.FindOne(context.Background(), filter0).Decode(&distri)
 	return Success, nil, distri.Code
+}
+
+func CreateDistrict(s *Space, col_dis, col_dic *mongo.Collection) error {
+	//col--是district表
+	var district0 *District
+	col_dis.FindOne(context.Background(), bson.D{{"code", s.Spacecode[6:16]}}).Decode(&district0)
+	if district0 == nil {
+		return errors.New("no coresponding district for the space")
+	}
+	var Up_district *District
+	col_dis.FindOne(context.Background(), bson.D{{"code", district0.Parentcode}}).Decode(&Up_district)
+	if Up_district == nil {
+		return errors.New("no coresponding upper district for the space")
+	}
+	var dictionary0 *Dictionary
+	col_dic.FindOne(context.Background(), bson.D{{"code", district0.Dictionarycode}}).Decode(&dictionary0)
+	if dictionary0 == nil {
+		return errors.New("no coresponding dictionary for the space")
+	}
+	_, error_insert, _ := NewDistrict(district0.Parentcode, dictionary0, district0.Name, Up_district.Name, int(s.Level), col_dis)
+	if error_insert != nil {
+		return error_insert.(error)
+	}
+	return nil
 }
 
 //---------------------------------------------------------------

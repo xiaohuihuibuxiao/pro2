@@ -97,7 +97,7 @@ func EncodeSpaceDelReponse(ctx context.Context, w http.ResponseWriter, response 
 
 //--复制空间--
 func DecodeCloneRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	return &SpaceReviseRequest{
+	return &SpaceCloneRequest{
 		Token: r.Header.Get("token"),
 		Sid:   mux.Vars(r)["sid"],
 	}, nil

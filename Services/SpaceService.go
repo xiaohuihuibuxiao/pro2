@@ -75,16 +75,26 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 
 	var checkspace *Baseinfo.Space
 	col_space.FindOne(context.Background(), bson.D{{"spacecode", spacecode}}).Decode(&checkspace)
-	//fmt.Println("----------/////", checkspace)
 	if checkspace != nil {
 		response.Code = Baseinfo.CONST_DATA_HASEXISTED
 		response.Msg = "this space has existed!"
 		return response
 	}
 
+	var upspaceid string
+	masteredSpace, err_upspace := Baseinfo.FindMasteredSpace(spacecode, int64(r.Level), col_space)
+	if err_upspace != nil {
+		if masteredSpace == nil {
+			upspaceid = "000000000000000000000000"
+		} else {
+			upspaceid = masteredSpace.Id.Hex()
+
+		}
+	}
+
 	newspace := &Baseinfo.Space{
 		Id:        primitive.NewObjectIDFromTimestamp(time.Now()),
-		Mastered:  "",
+		Mastered:  upspaceid, //这个直接填上
 		Master:    nil,
 		Devids:    nil,
 		Level:     int64(r.Level),
@@ -100,7 +110,13 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 		response.Msg = err_ins.Error()
 		return response
 	}
-
+	//在上级空间的master中添加新空间的id
+	if r.Level > 4 && r.Level < 9 {
+		var m []string
+		m = masteredSpace.Master
+		m = append(m, insert_result.InsertedID.(string))
+		col_space.FindOneAndUpdate(context.Background(), bson.D{{"_id", masteredSpace.Id}}, bson.D{{"$set", bson.D{{"master", m}}}})
+	}
 	response.Code = Baseinfo.Success
 	response.Data = insert_result.InsertedID
 	return response
@@ -176,7 +192,7 @@ func (this SpaceReviseService) ReviseSapce(r *SpaceReviseRequest) *CommonRespons
 	var s *Baseinfo.Space
 	col_space.FindOne(context.Background(), filter).Decode(&s)
 	if s == nil {
-		response.Code = Baseinfo.CONST_ACTION_UNEXISTED
+		response.Code = Baseinfo.CONST_DATA_UNEXISTED
 		response.Msg = "find no space by sid "
 		return response
 	}
@@ -261,5 +277,66 @@ type WSpaceCloneService interface {
 type SpaceCloneService struct{}
 
 func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
-	return nil
+	response := &CommonResponse{}
+	col_space := Baseinfo.Client.Database("test").Collection("space")
+	col_dis := Baseinfo.Client.Database("test").Collection("district")
+	col_dic := Baseinfo.Client.Database("test").Collection("dictionary")
+
+	err_checktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	if err_checktoken != nil {
+		response.Code = Baseinfo.CONST_TOEKN_INVALID
+		response.Msg = err_checktoken.Error()
+		return response
+	}
+
+	sid, err_obj := primitive.ObjectIDFromHex(r.Sid)
+	if err_obj != nil {
+		response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
+		response.Msg = err_obj.Error()
+		return response
+	}
+
+	var originlspace *Baseinfo.Space
+	col_space.FindOne(context.Background(), bson.D{{"_id", sid}}).Decode(&originlspace)
+	if originlspace == nil {
+		response.Code = Baseinfo.CONST_DATA_UNEXISTED
+		response.Msg = "can't find original space !"
+		return response
+	}
+
+	if originlspace.Userid != tokenuser && originlspace.Userid != "" {
+		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+		response.Msg = "can't clone other user's space !"
+		return response
+	}
+
+	//除了创建新的space，还需要创建新的district存储起来 TODO
+	err_newdis := Baseinfo.CreateDistrict(originlspace, col_dis, col_dic)
+	if err_newdis != nil {
+		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+		response.Msg = "can't clone other user's space !"
+		return response
+	}
+	newspace := &Baseinfo.Space{
+		Id:        primitive.NewObjectIDFromTimestamp(time.Now()),
+		Mastered:  originlspace.Mastered,
+		Master:    nil,
+		Devids:    nil,
+		Level:     originlspace.Level,
+		Spacecode: "",
+		Title:     "",
+		Addr:      "",
+		Userid:    originlspace.Userid,
+		External:  nil,
+	}
+	insertresult, err_ins := col_space.InsertOne(context.Background(), newspace)
+	if err_ins != nil {
+		response.Code = Baseinfo.CONST_INSERT_FAIL
+		response.Msg = "clone space failed:" + err_ins.Error()
+		return response
+	}
+
+	response.Code = Baseinfo.Success
+	response.Data = insertresult.InsertedID
+	return response
 }
