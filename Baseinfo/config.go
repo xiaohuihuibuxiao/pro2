@@ -18,14 +18,17 @@ type Config struct {
 		Username   string
 		Password   string
 	}
+	Expiredtime int
 }
 
 var Client *mongo.Client
+var Expiredtime int //单位为秒
 
 func init() {
 	v := &Config{}
 	//data,err:=ioutil.ReadFile("./config.json")//放在服务器上时 这么写路径
-	data, err := ioutil.ReadFile("D:/code/xatt/pro2/Baseinfo/config.json")
+	//data, err := ioutil.ReadFile("D:/code/xatt/pro2/Baseinfo/config.json")//家里的路径
+	data, err := ioutil.ReadFile("./Baseinfo/config.json")
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -35,7 +38,7 @@ func init() {
 		log.Fatal(err_j)
 		return
 	}
-
+	Expiredtime = v.Expiredtime
 	opts := options.Client().ApplyURI("mongodb://47.100.44.103:27017")
 	opts.SetAuth(options.Credential{
 		AuthMechanism:           "SCRAM-SHA-1",

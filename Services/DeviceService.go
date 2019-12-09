@@ -39,7 +39,7 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 		Devtype:   r.Devtype,
 		Title:     r.Title,
 		Addr:      "",
-		Housecode: "",
+		Spacecode: "",
 		Expand:    nil,
 		External:  nil,
 	}
@@ -126,6 +126,7 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 		return response
 	}
 	var dev *Baseinfo.Device
+	var spaceid primitive.ObjectID
 	id, err_obj := primitive.ObjectIDFromHex(r.Deviceid)
 	if err_obj == nil {
 		//传入的时id
@@ -135,7 +136,7 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 			response.Msg = err_find.Error()
 			return response
 		}
-
+		spaceid = dev.Sid
 		if tokenuser != dev.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "no authority to delete another user' device !"
@@ -155,6 +156,7 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 			response.Msg = err_find.Error()
 			return response
 		}
+		spaceid = dev.Sid
 		if tokenuser != dev.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "no authority to delete another user' device !"
@@ -170,25 +172,22 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 	}
 
 	//--清除sid信息
-	if dev.Sid != primitive.NilObjectID {
+	if spaceid != primitive.NilObjectID {
 		var devids []primitive.ObjectID
 		var space *Baseinfo.Space
 		err_find := col_space.FindOne(context.Background(), bson.D{{"_id", dev.Sid}}).Decode(&space)
-		if space == nil {
-			response.Code = Baseinfo.CONST_FIND_FAIL
-			response.Msg = err_find.Error()
-			return response
-		}
-		for _, v := range space.Devids {
-			if v != dev.Id {
-				devids = append(devids, v)
+		if space != nil {
+			for _, v := range space.Devids {
+				if v != dev.Id {
+					devids = append(devids, v)
+				}
 			}
-		}
-		_, err_upd := col_space.UpdateOne(context.Background(), bson.D{{"_id", dev.Sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
-		if err_upd != nil {
-			response.Code = Baseinfo.CONST_UPDATE_FAIL
-			response.Msg = err_find.Error()
-			return response
+			_, err_upd := col_space.UpdateOne(context.Background(), bson.D{{"_id", dev.Sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
+			if err_upd != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = err_find.Error()
+				return response
+			}
 		}
 	}
 
@@ -273,7 +272,6 @@ type WDeviceBindService interface {
 type DeviceBindService struct{}
 
 func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
-	fmt.Println("5")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	col_space := Baseinfo.Client.Database("test").Collection("space")
@@ -346,7 +344,8 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		}
 	}
 	//sid为真实有效的id时，绑定房源
-	if sid_obj, err := primitive.ObjectIDFromHex(sid); err != nil {
+	sid_obj, err_sid := primitive.ObjectIDFromHex(sid)
+	if err_sid == nil {
 		var devids []primitive.ObjectID
 		var space *Baseinfo.Space
 		col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&space)
@@ -356,9 +355,13 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 			return response
 		}
 		devids = space.Devids
-		devids = append(devids, sid_obj)
+		if isid {
+			devids = append(devids, id)
+		} else {
+			devids = append(devids, dev.Id)
+		}
 		//更新space表
-		_, err_upd := col_space.UpdateOne(context.Background(), bson.D{{"_id", sid_obj}}, bson.D{{"$set", devids}})
+		_, err_upd := col_space.UpdateOne(context.Background(), bson.D{{"_id", sid_obj}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
 		if err_upd != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = err_upd.Error()
@@ -366,23 +369,46 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		}
 		//跟新device表
 		if isid {
-			_, err_update := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"sid", sid_obj}}}})
+			_, err_update := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
+				{"sid", sid_obj},
+				{"addr", space.Addr},
+				{"spacecode", space.Spacecode},
+			}}})
 			if err_update != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err_update.Error()
 				return response
 			}
 		} else {
-			_, err1 := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
+			_, err1 := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{
+				{"sid", sid_obj},
+				{"addr", space.Addr},
+				{"spacecode", space.Spacecode},
+			}}})
 			if err1 != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err1.Error()
 				return response
 			}
 		}
-
+	} else {
+		response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
+		response.Msg = "invalid spaceid"
+		return response
 	}
-	if gatewayid != "" {
+	if gatewayid != "" { //gatewayid只允许输入编号，不是_id
+		var gateway *Baseinfo.Device
+		col_device.FindOne(context.Background(), bson.D{{"deviceid", gatewayid}}).Decode(&gateway)
+		if gateway == nil {
+			response.Code = Baseinfo.CONST_UPDATE_FAIL
+			response.Msg = "can't find gateway"
+			return response
+		}
+		if gateway.Userid != tokenuser {
+			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+			response.Msg = "gateway has been bound in another user or not bound"
+			return response
+		}
 		if isid {
 			_, err := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"gatewayid", gatewayid}}}})
 			if err != nil {
@@ -411,7 +437,6 @@ type WDeviceUnboundService interface {
 type DeviceUnboundService struct{}
 
 func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonResponse {
-	fmt.Println("6")
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")
 	col_space := Baseinfo.Client.Database("test").Collection("space")

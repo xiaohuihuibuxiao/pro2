@@ -67,7 +67,8 @@ func Logintokenauth(token string) (error, string) {
 	if token == "" {
 		return errors.New("lack of token"), ""
 	}
-	ok, errt, user := Authtoken(token)
+	//ok, errt, user := Authtoken(token)//对称
+	ok, errt, user := TokenCheck_asymmetricalkey(token) //非对称验证
 	if !ok || errt != nil {
 		return errt, user
 	}
@@ -119,13 +120,11 @@ func TokenGen_asymmetricalkey(userid string) (string, error) {
 		return "", err
 	}
 	user := UserClaim{Uname: userid}
-	user.ExpiresAt = time.Now().Add(time.Second * 30).Unix() //TODO 在config中配置
+	user.ExpiresAt = time.Now().Add(time.Duration(Expiredtime) * time.Second).Unix() //TODO 在config中配置
 	token_obj := jwt.NewWithClaims(jwt.SigningMethodRS256, user)
 	token, _ := token_obj.SignedString(priKey)
-	//token_obj:=jwt.NewWithClaims(jwt.SigningMethodRS256,UserClaim{Uname:"shenyi"})
-	//token,_:=token_obj.SignedString(priKey)
 
-	fmt.Println(token)
+	//fmt.Println(token)
 
 	//--校验token时使用pubkey
 	uc := UserClaim{}
@@ -138,38 +137,38 @@ func TokenGen_asymmetricalkey(userid string) (string, error) {
 	return token, nil
 }
 
-func TokenCheck_asymmetricalkey(token string) (error, string) {
+func TokenCheck_asymmetricalkey(token string) (bool, error, string) {
 	pubKeyBytes, err := ioutil.ReadFile("./pem/public.pem")
 	if err != nil {
 		log.Fatal("公钥文件读取失败")
-		return err, ""
+		return false, err, ""
 	}
 	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyBytes)
 	if err != nil {
 		log.Fatal("公钥文件不正确")
-		return err, ""
+		return false, err, ""
 	}
 	uc := UserClaim{}
 	getToken, err := jwt.ParseWithClaims(token, &uc, func(token *jwt.Token) (i interface{}, e error) {
 		return pubKey, nil
 	})
 	if getToken != nil && getToken.Valid {
-		fmt.Println(getToken.Claims.(*UserClaim).Uname)
+		//fmt.Println(getToken.Claims.(*UserClaim).Uname)
 	} else if ve, ok := err.(*jwt.ValidationError); ok {
 		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			fmt.Println("错误的token")
-			return errors.New("错误的token"), ""
+			//fmt.Println("错误的token")
+			return false, errors.New("invalid token"), ""
 		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
 
-			fmt.Println("token过期或未启用")
-			return errors.New("token过期或未启用"), ""
+			//fmt.Println("token过期或未启用")
+			return false, errors.New("token is expired"), ""
 		} else {
-			fmt.Println("Couldn't handle this token:", err)
-			return errors.New("Couldn't handle this token:" + err.Error()), ""
+			//fmt.Println("Couldn't handle this token:", err)
+			return false, errors.New("Couldn't handle this token:" + err.Error()), ""
 		}
 	} else {
-		fmt.Println("无法解析此token", err)
-		return errors.New("unresolved token err:" + err.Error()), ""
+		//fmt.Println("无法解析此token", err)
+		return false, errors.New("unresolved token err:" + err.Error()), ""
 	}
-	return nil, getToken.Claims.(*UserClaim).Uname
+	return true, nil, getToken.Claims.(*UserClaim).Uname
 }

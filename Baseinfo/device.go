@@ -23,7 +23,7 @@ type Device struct {
 	Title string //TODO 表示设备的详细信息，如具体的位置
 	Addr  string //表示设备的地址 xx省xx市xx区xx商圈（xx小区，xx园区）+（title内容（可以在存储时把title的信
 	// 息也一起补充进来））
-	Housecode string      //地址的编码 按照层级设计过 每个代码对应唯一地址
+	Spacecode string      //地址的编码 按照层级设计过 每个代码对应唯一地址
 	Expand    interface{} //存储传感器最近上报的一次数据
 	External  interface{} //需要时用来补充信息
 }
@@ -46,13 +46,13 @@ func UnboundDeviceBydeviceid(dev *Device, kind string, col_dev, col_space *mongo
 			RemoveDev(dev.Sid, dev.Id, col_space)
 		}
 
-	case "1":
+	case "1": //解绑账户关联
 		update = bsonx.Doc{{"$set", bsonx.Document(
 			bsonx.Doc{{"userid", bsonx.String("")}})}}
-	case "2":
+	case "2": //解绑网关管理
 		update = bsonx.Doc{{"$set", bsonx.Document(
 			bsonx.Doc{{"gatewayid", bsonx.String("")}})}}
-	case "3":
+	case "3": //解绑地址
 		update = bsonx.Doc{{"$set", bsonx.Document(
 			bsonx.Doc{
 				{"sid", bsonx.ObjectID(primitive.NilObjectID)},

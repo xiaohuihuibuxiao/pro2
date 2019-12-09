@@ -262,5 +262,4 @@ type SpaceCloneService struct{}
 
 func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 	return nil
-
 }

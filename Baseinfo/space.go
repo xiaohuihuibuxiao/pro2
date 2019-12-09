@@ -2,6 +2,7 @@ package Baseinfo
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,6 +30,7 @@ func RemoveDev(sid, devid primitive.ObjectID, col *mongo.Collection) {
 	var devids []primitive.ObjectID
 	var s *Space
 	col.FindOne(context.Background(), bson.D{{"_id", sid}}).Decode(&s)
+	fmt.Println("space原来的decids为", s.Devids)
 	if s != nil {
 		for _, v := range s.Devids {
 			if v != devid {
@@ -36,6 +38,7 @@ func RemoveDev(sid, devid primitive.ObjectID, col *mongo.Collection) {
 			}
 		}
 	}
+	fmt.Println("新的devids", devids)
 	col.UpdateOne(context.Background(), bson.D{{"_id", sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
 }
 
