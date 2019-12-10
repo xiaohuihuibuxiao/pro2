@@ -70,15 +70,15 @@ func EncodeDeviceDeleteReponse(ctx context.Context, w http.ResponseWriter, respo
 //--修改设备--
 func DecodeDeviceReviseRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	var bodyinfo struct {
-		Title  string                 `json:"title"`
-		Expand map[string]interface{} `json:"expand"`
+		Title    string                 `json:"title"`
+		External map[string]interface{} `json:"external"`
 	}
 	body, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(body, &bodyinfo)
 	return &DeviceReviseRequest{
 		Token:    r.Header.Get("token"),
 		Deviceid: mymux.Vars(r)["deviceid"],
-		Expand:   bodyinfo.Expand,
+		External: bodyinfo.External,
 		Title:    bodyinfo.Title,
 	}, nil
 }

@@ -65,11 +65,12 @@ func UnboundDeviceBydeviceid(dev *Device, kind string, col_dev, col_space *mongo
 	default:
 		return CONST_PARAM_ERROR, "operate type is out of range", nil
 	}
-	var device *Device
-	err := col_dev.FindOneAndUpdate(context.Background(), filter, update).Decode(&device)
+	_, err := col_dev.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return Fail, err.Error(), nil
 	}
+	var device *Device
+	col_dev.FindOne(context.Background(), bson.D{{"deviceid", dev.Deviceid}}).Decode(&device)
 	return Success, "", device
 }
 
@@ -108,11 +109,12 @@ func UnboundDeviceByid(dev *Device, kind string, col_dev, col_space *mongo.Colle
 	default:
 		return CONST_PARAM_ERROR, "operatie type is out of range", nil
 	}
-	var device *Device
-	err := col_dev.FindOneAndUpdate(context.Background(), filter, update).Decode(&device)
+	_, err := col_dev.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		return Fail, err.Error(), nil
 	}
+	var device *Device
+	col_dev.FindOne(context.Background(), bson.D{{"deviceid", dev.Deviceid}}).Decode(&device)
 	return Success, "", dev
 }
 

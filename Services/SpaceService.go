@@ -156,8 +156,20 @@ func (this SpaceQueryService) QuerySpace(r *SpaceQueryRequest) *CommonResponse {
 		response.Msg = "can't query another user's space"
 		return response
 	}
+	var masterspace []*Baseinfo.Space
+	if s.Master != nil || len(s.Master) > 0 {
+		for _, v := range s.Master {
+			var masterS *Baseinfo.Space
+			mastersid, _ := primitive.ObjectIDFromHex(v)
+			col_space.FindOne(context.Background(), bson.D{{"_id", mastersid}}).Decode(&masterS)
+			if masterS != nil {
+				masterspace = append(masterspace, masterS)
+			}
+		}
+	}
 	response.Code = Baseinfo.Success
 	response.Data = s
+	response.Expand = masterspace
 	return response
 }
 
@@ -207,7 +219,11 @@ func (this SpaceReviseService) ReviseSapce(r *SpaceReviseRequest) *CommonRespons
 		response.Msg = err_upd.Error()
 		return response
 	}
+	var reviseddpace *Baseinfo.Space
+	col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&reviseddpace)
+
 	response.Code = Baseinfo.Success
+	response.Data = reviseddpace
 	return response
 
 }

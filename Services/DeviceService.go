@@ -48,8 +48,10 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 		response.Msg = err_insert.Error()
 		return response
 	}
+	var newdevice *Baseinfo.Device
+	col_device.FindOne(context.Background(), bson.D{{"_id", result_insert_.InsertedID}}).Decode(&newdevice)
 	response.Code = Baseinfo.Success
-	response.Data = result_insert_.InsertedID
+	response.Data = newdevice
 	return response
 }
 
@@ -211,6 +213,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		return response
 	}
 	var device *Baseinfo.Device
+	var revieddev *Baseinfo.Device
 	id, err_obj := primitive.ObjectIDFromHex(r.Deviceid)
 	if err_obj == nil {
 		//传入的是id
@@ -227,13 +230,14 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		}
 		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
 			{"title", r.Title},
-			{"expand", r.Expand},
+			{"external", r.External},
 		}}})
 		if err_upd != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = err_upd.Error()
 			return response
 		}
+		col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&revieddev)
 	} else {
 		//传入的是devid
 		err_find := col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&device)
@@ -249,15 +253,17 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		}
 		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}, bson.D{{"$set", bson.D{
 			{"title", r.Title},
-			{"expand", r.Expand},
+			{"external", r.External},
 		}}})
 		if err_upd != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = err_upd.Error()
 			return response
 		}
+		col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&revieddev)
 	}
 	response.Code = Baseinfo.Success
+	response.Data = revieddev
 	return response
 }
 
@@ -423,7 +429,14 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		}
 	}
 
+	var newdev *Baseinfo.Device
+	if isid {
+		col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&newdev)
+	} else {
+		col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&newdev)
+	}
 	response.Code = Baseinfo.Success
+	response.Data = newdev
 	return response
 }
 
@@ -464,6 +477,13 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 			response.Msg = "cant't operate another user' device!"
 			return response
 		}
+		var node *Baseinfo.Device
+		col_device.FindOne(context.Background(), bson.D{{"gatewayid", dev.Deviceid}, {"isnode", true}}).Decode(&node)
+		if node != nil {
+			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+			response.Msg = "cant't unbound gateway with nodes under it!"
+			return response
+		}
 		errcode, errmsg, data = Baseinfo.UnboundDeviceByid(dev, kind, col_device, col_space)
 
 	} else {
@@ -477,6 +497,13 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 		if tokenuser != dev.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "cant't operate another user' device!"
+			return response
+		}
+		var node *Baseinfo.Device
+		col_device.FindOne(context.Background(), bson.D{{"gatewayid", deviceid}, {"isnode", true}}).Decode(&node)
+		if node != nil {
+			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+			response.Msg = "cant't unbound gateway with nodes under it!"
 			return response
 		}
 		errcode, errmsg, data = Baseinfo.UnboundDeviceBydeviceid(dev, kind, col_device, col_space)

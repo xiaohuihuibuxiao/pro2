@@ -56,7 +56,7 @@ type DeviceReviseRequest struct {
 	Token    string                 `json:"token"`
 	Title    string                 `json:"title"`
 	Deviceid string                 `json:"deviceid"`
-	Expand   map[string]interface{} `json:"expand"`
+	External map[string]interface{} `json:"external"`
 }
 
 func DeviceReviseEndpoint(devicereviseservice WDeviceReviseService) endpoint.Endpoint {

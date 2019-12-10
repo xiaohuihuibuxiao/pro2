@@ -80,7 +80,9 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 		commonresponse.Msg = err_insert.Error()
 		return commonresponse
 	}
+	var newuserinfo *Baseinfo.User
+	col_user.FindOne(context.Background(), bson.D{{"_id", ins_result.InsertedID.(primitive.ObjectID)}}).Decode(&newuserinfo)
 	commonresponse.Code = Baseinfo.Success
-	commonresponse.Data = ins_result.InsertedID
+	commonresponse.Data = newuserinfo
 	return commonresponse
 }
