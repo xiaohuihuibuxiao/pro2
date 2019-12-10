@@ -2,7 +2,6 @@ package Services
 
 import (
 	"context"
-	"fmt"
 	"github.com/astaxie/beego/logs"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -113,7 +112,6 @@ type DeviceDeleteService struct{}
 
 //不考虑网关的删除和相关影响
 func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResponse {
-	fmt.Println("3")
 	var deletecount int64
 	response := &CommonResponse{}
 	col_device := Baseinfo.Client.Database("test").Collection("device")

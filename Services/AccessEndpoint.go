@@ -2,7 +2,7 @@ package Services
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-kit/kit/endpoint"
 	"time"
@@ -26,7 +26,7 @@ func (this *AccessService) GetToken(uname string, upass string) (string, error) 
 		token, err := token_obj.SignedString([]byte(secKey))
 		return token, err
 	}
-	return "", fmt.Errorf("error uname and password")
+	return "", errors.New("error uname and password")
 }
 
 type AccessRequest struct {

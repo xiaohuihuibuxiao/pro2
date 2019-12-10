@@ -29,7 +29,6 @@ func Init() *mymux.Router {
 	//	httptransport.ServerErrorEncoder(MyErrorEncoder), //????
 	//}
 	//serverHanlder := httptransport.NewServer(endp, DecodeUserRequest, EncodeUserResponse, options...)
-	//fmt.Println(serverHanlder)
 
 	r := mymux.NewRouter()
 
@@ -72,7 +71,7 @@ func Init() *mymux.Router {
 	r.Methods("POST").Path(`/space`).Handler(spacecreate_handler)      //--创建空间--ok
 	r.Methods("GET").Path(`/space/{sid}`).Handler(spacequery_handler)  //--查询空间--ok
 	r.Methods("PUT").Path(`/space/{sid}`).Handler(spacerevise_handler) //--修改空间--ok
-	r.Methods("DELETE").Path(`/space/{sid}`).Handler(spacedel_handler) //--删除空间--ok--一般不要删除空间，需要换个空间的话
+	r.Methods("DELETE").Path(`/space/{sid}`).Handler(spacedel_handler) //--删除空间--ok--一般不要删除空间，需要的话新建一个空间并绑定即可
 	// 直接解绑设备然后新建空间再绑定就好
 	r.Methods("POST").Path(`/space/clone/{sid}`).Handler(spaceclone_handler) //--复制空间--ok TODO
 

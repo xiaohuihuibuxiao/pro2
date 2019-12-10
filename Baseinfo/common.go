@@ -81,7 +81,6 @@ func TokenGen_symmetricalkey() string {
 	//hs256
 	token_obj := jwt.NewWithClaims(jwt.SigningMethodHS256, UserClaim{Uname: "shenyi"})
 	token, _ := token_obj.SignedString(sec)
-	fmt.Println(token)
 	return token
 }
 
@@ -124,8 +123,6 @@ func TokenGen_asymmetricalkey(userid string) (string, error) {
 	token_obj := jwt.NewWithClaims(jwt.SigningMethodRS256, user)
 	token, _ := token_obj.SignedString(priKey)
 
-	//fmt.Println(token)
-
 	//--校验token时使用pubkey
 	uc := UserClaim{}
 	getToken, _ := jwt.ParseWithClaims(token, &uc, func(token *jwt.Token) (i interface{}, e error) {
@@ -153,21 +150,16 @@ func TokenCheck_asymmetricalkey(token string) (bool, error, string) {
 		return pubKey, nil
 	})
 	if getToken != nil && getToken.Valid {
-		//fmt.Println(getToken.Claims.(*UserClaim).Uname)
 	} else if ve, ok := err.(*jwt.ValidationError); ok {
 		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			//fmt.Println("错误的token")
 			return false, errors.New("invalid token"), ""
 		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
 
-			//fmt.Println("token过期或未启用")
 			return false, errors.New("token is expired"), ""
 		} else {
-			//fmt.Println("Couldn't handle this token:", err)
 			return false, errors.New("Couldn't handle this token:" + err.Error()), ""
 		}
 	} else {
-		//fmt.Println("无法解析此token", err)
 		return false, errors.New("unresolved token err:" + err.Error()), ""
 	}
 	return true, nil, getToken.Claims.(*UserClaim).Uname

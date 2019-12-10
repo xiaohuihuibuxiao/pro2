@@ -3,7 +3,6 @@ package Baseinfo
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -52,12 +51,10 @@ func init() {
 	Client, _ = mongo.Connect(context.Background(), opts)
 	//Client, err := mongo.Connect(context.Background(), opts)
 	//if err != nil {
-	//	fmt.Println("aaaa", err)
 	//	return
 	//}
 
 	if err := Client.Ping(context.Background(), readpref.Primary()); err != nil {
-		fmt.Println("", err)
 		return
 	}
 	log.Println("connect successfully to mongodb ...")

@@ -84,7 +84,7 @@ func EncodeSpaceReviseReponse(ctx context.Context, w http.ResponseWriter, respon
 
 //--删除空间--
 func DecodeSpaceDelRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	return &SpaceReviseRequest{
+	return &SpaceDelRequest{
 		Token: r.Header.Get("token"),
 		Sid:   mux.Vars(r)["sid"],
 	}, nil

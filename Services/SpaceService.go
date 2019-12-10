@@ -41,7 +41,14 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 		response.Msg = "provice ,city , area or level can't be ignored !"
 		return response
 	}
+	district := r.District
+	if district == "" {
+		response.Code = Baseinfo.CONST_PARAM_LACK
+		response.Msg = "disctrict can't be nil"
+		return response
+	}
 
+	//获取省市区编码
 	errcode, errmsg, firstpartcode, areadic := Baseinfo.GetFirstPartCode("中国,"+province+","+city+","+area, col_dic)
 	if errmsg != nil {
 		response.Code = errcode
@@ -49,12 +56,6 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 		return response
 	}
 
-	district := r.District
-	if district == "" {
-		response.Code = Baseinfo.CONST_PARAM_LACK
-		response.Msg = "disctrict can't be nil"
-		return response
-	}
 	building := r.Building
 	storey := r.Storey
 	room := r.Room
@@ -80,14 +81,12 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	}
 
 	var upspaceid string
-	masteredSpace, err_upspace := Baseinfo.FindMasteredSpace(spacecode, int64(r.Level), col_space)
-	if err_upspace != nil {
-		if masteredSpace == nil {
-			upspaceid = "000000000000000000000000"
-		} else {
-			upspaceid = masteredSpace.Id.Hex()
-
-		}
+	//masteredspace--上级区域
+	masteredSpace, _ := Baseinfo.FindMasteredSpace(spacecode, int64(r.Level), col_space)
+	if masteredSpace != nil {
+		upspaceid = masteredSpace.Id.Hex()
+	} else {
+		upspaceid = "000000000000000000000000"
 	}
 
 	newspace := &Baseinfo.Space{
@@ -109,14 +108,20 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 		return response
 	}
 	//在上级空间的master中添加新空间的id
-	if r.Level > 4 && r.Level < 9 {
-		var m []string
-		m = masteredSpace.Master
-		m = append(m, insert_result.InsertedID.(string))
-		col_space.FindOneAndUpdate(context.Background(), bson.D{{"_id", masteredSpace.Id}}, bson.D{{"$set", bson.D{{"master", m}}}})
+	if masteredSpace != nil {
+		if r.Level > 4 && r.Level < 9 {
+			var m []string
+			for _, v := range masteredSpace.Master {
+				m = append(m, v)
+			} //把原本的master先赋值给m
+			m = append(m, insert_result.InsertedID.(primitive.ObjectID).Hex())
+			col_space.FindOneAndUpdate(context.Background(), bson.D{{"_id", masteredSpace.Id}}, bson.D{{"$set", bson.D{{"master", m}}}})
+		}
 	}
+	var newsapceinfo *Baseinfo.Space
+	col_space.FindOne(context.Background(), bson.D{{"_id", insert_result.InsertedID}}).Decode(&newsapceinfo)
 	response.Code = Baseinfo.Success
-	response.Data = insert_result.InsertedID
+	response.Data = newsapceinfo
 	return response
 }
 
@@ -280,7 +285,9 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	//该区域，以及下属的区域，全部删除！！！
 	e, m := Baseinfo.RemoveSpace(s, col_space)
 	response.Code = e
-	response.Msg = m.(error).Error()
+	if m != nil {
+		response.Msg = m.(error).Error()
+	}
 	return response
 }
 
@@ -325,11 +332,20 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 	}
 
 	//除了创建新的space，还需要创建新的district存储起来
-	err_newdis := Baseinfo.CreateDistrict(originlspace, col_dis, col_dic)
+	err_newdis, newdistrictcode := Baseinfo.CreateDistrict(originlspace, col_dis, col_dic)
 	if err_newdis != nil {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = "can't clone other user's space !"
 		return response
+	}
+
+	var newdistrict *Baseinfo.District
+	code := newdistrictcode[6:]
+	discode := originlspace.Spacecode[:6]
+	col_dis.FindOne(context.Background(), bson.D{{"code", code}, {"dictionarycode", discode}}).Decode(&newdistrict)
+	var newaddr string
+	if newdistrict != nil {
+		newaddr = Baseinfo.Getaddr(newdistrict.Mergeaddr, ",")
 	}
 	newspace := &Baseinfo.Space{
 		Id:        primitive.NewObjectIDFromTimestamp(time.Now()),
@@ -337,9 +353,9 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 		Master:    nil,
 		Devids:    nil,
 		Level:     originlspace.Level,
-		Spacecode: "",
-		Title:     "",
-		Addr:      "",
+		Spacecode: newdistrictcode,
+		Title:     originlspace.Title,
+		Addr:      newaddr,
 		Userid:    originlspace.Userid,
 		External:  nil,
 	}
@@ -350,7 +366,9 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 		return response
 	}
 
+	var newspaceinfo *Baseinfo.Space
+	col_space.FindOne(context.Background(), bson.D{{"_id", insertresult.InsertedID.(primitive.ObjectID)}}).Decode(&newspaceinfo)
 	response.Code = Baseinfo.Success
-	response.Data = insertresult.InsertedID
+	response.Data = newspaceinfo
 	return response
 }
