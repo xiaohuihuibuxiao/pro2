@@ -8,14 +8,10 @@ import (
 )
 
 type Logger struct {
-	Id     primitive.ObjectID `json:"id" bson:"_id"`
-	Time   string
-	Url    string
-	Method string
-	//Code     int64
-	//Msg      string
-	//Params   string //请求参数
-	//Data     interface{}
+	Id       primitive.ObjectID `json:"id" bson:"_id"`
+	Time     string
+	Url      string
+	Method   string
 	External interface{} //扩展字段
 	Expand   interface{}
 }

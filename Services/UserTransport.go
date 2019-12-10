@@ -3,26 +3,11 @@ package Services
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"pro2/util"
 )
-
-func DecodeUserRequest(c context.Context, r *http.Request) (interface{}, error) {
-	if mymux.Vars(r)["userid"] != "" {
-		return UserRequest{
-			Userid: mymux.Vars(r)["userid"],
-		}, nil
-	}
-	return nil, errors.New("参数错误")
-
-}
-func EncodeUserResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-type", "application/json")
-	return json.NewEncoder(w).Encode(response)
-}
 
 //------------------登陆---------------------------------
 

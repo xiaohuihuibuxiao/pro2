@@ -10,25 +10,6 @@ import (
 	"pro2/util"
 )
 
-//-----------独立------
-type UserRequest struct {
-	Userid string `json:"userid"`
-	Method string
-	Token  string
-}
-type UserResponse struct {
-	Result string `json:"result"`
-}
-
-func GenUserEndpoint(userService IUserService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		r := request.(UserRequest)
-		result := userService.GetName(r.Userid)
-		return UserResponse{Result: result}, nil
-	}
-}
-
-//---------------------邪恶的分割线-=============-------------------
 //----common--------
 type CommonResponse struct {
 	Code   int64       `json:"code"`
@@ -84,16 +65,24 @@ func RateLimit(limit *rate.Limiter) endpoint.Middleware {
 	}
 }
 
+type CommonLogger struct {
+	Token  string `json:"token"`
+	Url    string `json:"url"`
+	Method string `json:"method"`
+}
+
 //日志中间件
 func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			//	r := request.(UserRequest)
 			r := request.(*UserLoginRequest)
+
 			if r.Method != "GET" {
 				Baseinfo.RecordOperation(r.Url, r.Method)
 			}
-			logger.Log("method", r.Method, "event", "login", "url", r.Url)
+
+			logger.Log("method", r.Method, "url", r.Url)
 			return next(ctx, request)
 		}
 	}
@@ -103,7 +92,7 @@ func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
 func CheckTokenMiddleware() endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			r := request.(UserRequest)
+			r := request.(CommonLogger)
 			uc := UserClaim{}
 			getToken, err := jwt.ParseWithClaims(r.Token, &uc, func(token *jwt.Token) (i interface{}, e error) {
 				return []byte(secKey), nil

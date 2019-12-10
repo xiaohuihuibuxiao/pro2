@@ -33,12 +33,14 @@ func Init() *mymux.Router {
 	r := mymux.NewRouter()
 
 	//---用户相关----
-	user := UserLoginService{}
 	limit := rate.NewLimiter(1, 5) // 限制频繁登陆操作
-	endp := RateLimit(limit)(UserServiceLogMiddleware(logger)(UserLoginEndpoint(user)))
+	endp := RateLimit(limit)(UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{})))
 	//userlogin_handler := httptransport.NewServer(UserLoginEndpoint(UserLoginService{}), DecodeUserLoginRequest, EncodeuUserLoginResponse)
 	userlogin_handler := httptransport.NewServer(endp, DecodeUserLoginRequest, EncodeuUserLoginResponse)
 	r.Methods("POST").Path(`/user/login/{userid}`).Handler(userlogin_handler) //--登陆--ok
+
+	ep_createuser := UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{}))
+	httptransport.NewServer(ep_createuser, DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
 
 	usercreate_handler := httptransport.NewServer(UserCreateEndpoint(UserCreateService{}), DecodeUserCreateRequest, EncodeuUserCreateResponse)
 	//	r.Handle(`/user/{uid:\d+}`,serverHanlder)
@@ -73,7 +75,7 @@ func Init() *mymux.Router {
 	r.Methods("PUT").Path(`/space/{sid}`).Handler(spacerevise_handler) //--修改空间--ok
 	r.Methods("DELETE").Path(`/space/{sid}`).Handler(spacedel_handler) //--删除空间--ok--一般不要删除空间，需要的话新建一个空间并绑定即可
 	// 直接解绑设备然后新建空间再绑定就好
-	r.Methods("POST").Path(`/space/clone/{sid}`).Handler(spaceclone_handler) //--复制空间--ok TODO
+	r.Methods("POST").Path(`/space/clone/{sid}`).Handler(spaceclone_handler) //--复制空间--ok
 
 	return r
 }
