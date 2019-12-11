@@ -2,6 +2,7 @@ package Services
 
 import (
 	"context"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -27,6 +28,7 @@ type UserLoginRequest struct {
 }
 
 func UserLoginEndpoint(userloginService WUserLoginService) endpoint.Endpoint {
+	fmt.Println("bbb")
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) { //TODO requesr数据内容哪来的
 		r := request.(*UserLoginRequest)
 		result := userloginService.Login(r.Userid, r.Password)
@@ -71,15 +73,16 @@ type CommonLogger struct {
 	Method string `json:"method"`
 }
 
-//日志中间件
+//登陆日志中间件
 func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
+	fmt.Println("aa")
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 			//	r := request.(UserRequest)
 			r := request.(*UserLoginRequest)
 
 			if r.Method != "GET" {
-				Baseinfo.RecordOperation(r.Url, r.Method)
+				Baseinfo.RecordOperation(r.Url, r.Method, r.Userid)
 			}
 
 			logger.Log("method", r.Method, "url", r.Url)

@@ -19,10 +19,9 @@ func Init() *mymux.Router {
 		logger = kitlog.With(logger, "caller", kitlog.DefaultCaller)
 	}
 
-	//---其实就是用于用户登陆的 可以改写下 利用其限流器
 	///user := UserService{} //用户服务
 	//limit := rate.NewLimiter(1, 5)
-	//	endp := RateLimit(limit)((CheckTokenMiddleware()(GenUserEndpoint(user)))) //这个可以改写用户登陆接口 限制登陆次数
+	//	endp := RateLimit(limit)((CheckTokenMiddleware()(GenUserEndpoint(user))))
 	//	endp:=RateLimit(limit)(UserServiceLogMiddleware(logger)(CheckTokenMiddleware()(GenUserEndpoint(user))))
 
 	///options := []httptransport.ServerOption{

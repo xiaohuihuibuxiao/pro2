@@ -3,6 +3,7 @@ package Services
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
@@ -10,8 +11,8 @@ import (
 )
 
 //------------------登陆---------------------------------
-
 func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	fmt.Println("ccc")
 	var userid string = ""
 	vars := mymux.Vars(r)
 	if user, ok := vars["userid"]; ok {
@@ -33,6 +34,7 @@ func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, 
 }
 
 func EncodeuUserLoginResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	fmt.Println("ddd")
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }

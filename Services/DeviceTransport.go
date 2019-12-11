@@ -6,6 +6,7 @@ import (
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"pro2/Baseinfo"
 )
 
 //--新建设备--
@@ -25,6 +26,10 @@ func DecodeDeviceCreateRequest(ctx context.Context, r *http.Request) (interface{
 		Title   string `json:"title"`
 	}
 	json.Unmarshal(body, &newdevice)
+	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(token)
+	if ok {
+		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)
+	}
 	return &DeviceCreateRequest{
 		Token:    token,
 		Deviceid: deviceid,
@@ -43,6 +48,10 @@ func EncodeDeviceCreateReponse(ctx context.Context, w http.ResponseWriter, respo
 //--查询设备--
 
 func DecodeDeviceQueryRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(r.Header.Get("token"))
+	if ok {
+		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)
+	}
 	return &DeviceQueryRequest{
 		Token:    r.Header.Get("token"),
 		Deviceid: mymux.Vars(r)["deviceid"],
@@ -56,6 +65,10 @@ func EncodeDeviceQueryReponse(ctx context.Context, w http.ResponseWriter, respon
 
 //--删除设备--
 func DecodeDeviceDeleteRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(r.Header.Get("token"))
+	if ok {
+		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)
+	}
 	return &DeviceDeleteRequest{
 		Token:    r.Header.Get("token"),
 		Deviceid: mymux.Vars(r)["deviceid"],
@@ -75,6 +88,10 @@ func DecodeDeviceReviseRequest(ctx context.Context, r *http.Request) (interface{
 	}
 	body, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(body, &bodyinfo)
+	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(r.Header.Get("token"))
+	if ok {
+		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)
+	}
 	return &DeviceReviseRequest{
 		Token:    r.Header.Get("token"),
 		Deviceid: mymux.Vars(r)["deviceid"],
@@ -90,6 +107,10 @@ func EncodeDeviceReviseReponse(ctx context.Context, w http.ResponseWriter, respo
 
 //--绑定设备--
 func DecodeDeviceBindRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(r.Header.Get("token"))
+	if ok {
+		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)
+	}
 	return &DeviceBindRequest{
 		Token:     r.Header.Get("token"),
 		Deviceid:  mymux.Vars(r)["deviceid"],
@@ -106,6 +127,10 @@ func EncodeDeviceBindReponse(ctx context.Context, w http.ResponseWriter, respons
 
 //--解绑设备--
 func DecodeDeviceUnboundRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(r.Header.Get("token"))
+	if ok {
+		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)
+	}
 	//t, _ := strconv.Atoi(mymux.Vars(r)["type"])
 	return &DeviceUnboundRequest{
 		Token:    r.Header.Get("token"),
@@ -121,7 +146,6 @@ func EncodeDeviceUnboundReponse(ctx context.Context, w http.ResponseWriter, resp
 
 //--上传数据--
 func DecodeDeviceUploadRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-
 	var bodyinfo struct {
 		Deviceid string      `json:"deviceid"`
 		T        string      `json:"t"`
@@ -131,6 +155,10 @@ func DecodeDeviceUploadRequest(ctx context.Context, r *http.Request) (interface{
 	}
 	body, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(body, &bodyinfo)
+	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(r.Header.Get("token"))
+	if ok {
+		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)
+	}
 	return &DeviceUploadRequest{
 		Deviceid: mymux.Vars(r)["deviceid"],
 		T:        bodyinfo.T,

@@ -15,8 +15,8 @@ type UserClaim struct {
 }
 
 const (
-	key               = "dashaiduhakdkadhq132u489274927498(&(*&(*^(E" //TODO key目前是随意设置的 如果有必要在这里修改
-	symmetricalsecret = "spacemanagementsystembasedonsensors"
+	key               = "dashaiduhakdkadhq132u489274927498(&(*&(*^(E" //未使用
+	symmetricalsecret = "spacemanagementsystembasedonsensors"         //使用中
 )
 
 //生成token--对称密钥
@@ -95,7 +95,7 @@ func TokenCheck_symmetricalkey(token string, secret []byte) {
 	}
 }
 
-//=-----非对称加密token
+//=-----非对称加密token------
 func TokenGen_asymmetricalkey(userid string) (string, error) {
 	priKeyBytes, err := ioutil.ReadFile("./pem/private.pem")
 	if err != nil {
