@@ -18,6 +18,10 @@ type UserLoginService struct{}
 
 func (this UserLoginService) Login(userid string, pwd string) *CommonResponse {
 	token, errcode, err := Baseinfo.Loginauth(userid, pwd)
+	if err != nil {
+		logger.Log("Login err:", err.Error())
+	}
+
 	return &CommonResponse{
 		Code:   errcode,
 		Msg:    err.Error(),
@@ -43,11 +47,13 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 	if err_find != nil && err_find.Error() != "mongo: no documents in result" {
 		commonresponse.Code = Baseinfo.CONST_FIND_FAIL
 		commonresponse.Msg = err_find.Error()
+		logger.Log("Create_User_Err:", "find user by userid in mongo fails", "mongo error:", err_find)
 		return commonresponse
 	}
 	if finduser != nil { //没有报错且找到了该用户 说明已经被注册了
 		commonresponse.Code = Baseinfo.CONST_USER_OCCUPIED
 		commonresponse.Msg = "this userid has been occupied,pls use another one!"
+		logger.Log("Create_User_Err:", "this userid has been occupied,pls use another one!")
 		return commonresponse
 	}
 
@@ -66,6 +72,7 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 	if err_insert != nil {
 		commonresponse.Code = Baseinfo.CONST_INSERT_FAIL
 		commonresponse.Msg = err_insert.Error()
+		logger.Log("Create_User_Err:", err_insert.Error())
 		return commonresponse
 	}
 	var newuserinfo *Baseinfo.User

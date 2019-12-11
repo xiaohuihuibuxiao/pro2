@@ -164,3 +164,8 @@ func TokenCheck_asymmetricalkey(token string) (bool, error, string) {
 	}
 	return true, nil, getToken.Claims.(*UserClaim).Uname
 }
+
+func RefreshToken(token string) string {
+
+	return ""
+}

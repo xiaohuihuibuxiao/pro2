@@ -10,7 +10,6 @@ import (
 )
 
 func Init() *mymux.Router {
-
 	var logger kitlog.Logger
 	{
 		logger = kitlog.NewLogfmtLogger(os.Stdout)
