@@ -24,7 +24,7 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Create_Space_Err", err_checktoken.Error())
+		_ = logger.Log("Create_Space_Err", err_checktoken.Error())
 		return response
 	}
 	//....生成space所需的全部信息
@@ -35,20 +35,20 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	if province == "" || city == "" || area == "" || level == 0 {
 		response.Code = Baseinfo.CONST_PARAM_LACK
 		response.Msg = "provice ,city , area or level can't be ignored !"
-		logger.Log("Create_Space_Err", "provice ,city , area or level can't be ignored !")
+		_ = logger.Log("Create_Space_Err", "provice ,city , area or level can't be ignored !")
 		return response
 	}
 	if level < 4 || level > 8 {
 		response.Code = Baseinfo.CONST_PARAM_ERROR
 		response.Msg = "provice ,city , area or level can't be ignored !"
-		logger.Log("Create_Space_Err", "provice ,city , area or level can't be ignored !")
+		_ = logger.Log("Create_Space_Err", "provice ,city , area or level can't be ignored !")
 		return response
 	}
 	district := r.District
 	if district == "" {
 		response.Code = Baseinfo.CONST_PARAM_LACK
 		response.Msg = "disctrict can't be nil"
-		logger.Log("Create_Space_Err", "disctrict can't be nil")
+		_ = logger.Log("Create_Space_Err", "disctrict can't be nil")
 		return response
 	}
 
@@ -57,7 +57,7 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	if errmsg != nil {
 		response.Code = errcode
 		response.Msg = errmsg.(error).Error()
-		logger.Log("Create_Space_Err", errmsg.(error).Error())
+		_ = logger.Log("Create_Space_Err", errmsg.(error).Error())
 		return response
 	}
 
@@ -70,20 +70,20 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	if errmsg1 != nil {
 		response.Code = errcode1
 		response.Msg = errmsg1.(error).Error()
-		logger.Log("Create_Space_Err", errmsg1.(error).Error())
+		_ = logger.Log("Create_Space_Err", errmsg1.(error).Error())
 		return response
 	}
 
 	spacecode := firstpartcode + secondpartcode
 	var nowdis *Baseinfo.District
-	col_dis.FindOne(context.Background(), bson.D{{"code", secondpartcode}, {"dictionarycode", areadic.Code}}).Decode(&nowdis)
+	_ = col_dis.FindOne(context.Background(), bson.D{{"code", secondpartcode}, {"dictionarycode", areadic.Code}}).Decode(&nowdis)
 
 	var checkspace *Baseinfo.Space
-	col_space.FindOne(context.Background(), bson.D{{"spacecode", spacecode}}).Decode(&checkspace)
+	_ = col_space.FindOne(context.Background(), bson.D{{"spacecode", spacecode}}).Decode(&checkspace)
 	if checkspace != nil {
 		response.Code = Baseinfo.CONST_DATA_HASEXISTED
 		response.Msg = "this space has existed!"
-		logger.Log("Create_Space_Err", "this space has existed!")
+		_ = logger.Log("Create_Space_Err", "this space has existed!")
 		return response
 	}
 
@@ -112,7 +112,7 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	if err_ins != nil {
 		response.Code = Baseinfo.CONST_INSERT_FAIL
 		response.Msg = err_ins.Error()
-		logger.Log("Create_Space_Err", err_ins.Error())
+		_ = logger.Log("Create_Space_Err", err_ins.Error())
 		return response
 	}
 	//在上级空间的master中添加新空间的id
@@ -127,7 +127,7 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 		}
 	}
 	var newsapceinfo *Baseinfo.Space
-	col_space.FindOne(context.Background(), bson.D{{"_id", insert_result.InsertedID}}).Decode(&newsapceinfo)
+	_ = col_space.FindOne(context.Background(), bson.D{{"_id", insert_result.InsertedID}}).Decode(&newsapceinfo)
 	response.Code = Baseinfo.Success
 	response.Data = newsapceinfo
 	return response
@@ -147,7 +147,7 @@ func (this SpaceQueryService) QuerySpace(r *SpaceQueryRequest) *CommonResponse {
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Query_Space_Err:", err_checktoken.Error())
+		_ = logger.Log("Query_Space_Err:", err_checktoken.Error())
 		return response
 	}
 
@@ -156,7 +156,7 @@ func (this SpaceQueryService) QuerySpace(r *SpaceQueryRequest) *CommonResponse {
 	if err_obj != nil {
 		response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
 		response.Msg = err_obj.Error()
-		logger.Log("Query_Space_Err:", err_obj.Error())
+		_ = logger.Log("Query_Space_Err:", err_obj.Error())
 		return response
 	}
 	var s *Baseinfo.Space
@@ -164,13 +164,13 @@ func (this SpaceQueryService) QuerySpace(r *SpaceQueryRequest) *CommonResponse {
 	if s == nil {
 		response.Code = Baseinfo.CONST_FIND_FAIL
 		response.Msg = err.Error()
-		logger.Log("Query_Space_Err:", err.Error())
+		_ = logger.Log("Query_Space_Err:", err.Error())
 		return response
 	}
 	if tokenuser != s.Userid {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = "can't query another user's space"
-		logger.Log("Query_Space_Err:", "can't query another user's space")
+		_ = logger.Log("Query_Space_Err:", "can't query another user's space")
 		return response
 	}
 	var masterspace []*Baseinfo.Space
@@ -178,7 +178,7 @@ func (this SpaceQueryService) QuerySpace(r *SpaceQueryRequest) *CommonResponse {
 		for _, v := range s.Master {
 			var masterS *Baseinfo.Space
 			mastersid, _ := primitive.ObjectIDFromHex(v)
-			col_space.FindOne(context.Background(), bson.D{{"_id", mastersid}}).Decode(&masterS)
+			_ = col_space.FindOne(context.Background(), bson.D{{"_id", mastersid}}).Decode(&masterS)
 			if masterS != nil {
 				masterspace = append(masterspace, masterS)
 			}
@@ -204,7 +204,7 @@ func (this SpaceReviseService) ReviseSapce(r *SpaceReviseRequest) *CommonRespons
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Revise_Space_Err:", err_checktoken.Error())
+		_ = logger.Log("Revise_Space_Err:", err_checktoken.Error())
 		return response
 	}
 
@@ -213,23 +213,23 @@ func (this SpaceReviseService) ReviseSapce(r *SpaceReviseRequest) *CommonRespons
 	if err_obj != nil {
 		response.Code = Baseinfo.CONST_PARAM_ERROR
 		response.Msg = err_obj.Error()
-		logger.Log("Revise_Space_Err:", err_obj.Error())
+		_ = logger.Log("Revise_Space_Err:", err_obj.Error())
 		return response
 	}
 	filter := bson.D{{"_id", sid_obj}}
 
 	var s *Baseinfo.Space
-	col_space.FindOne(context.Background(), filter).Decode(&s)
+	_ = col_space.FindOne(context.Background(), filter).Decode(&s)
 	if s == nil {
 		response.Code = Baseinfo.CONST_DATA_UNEXISTED
 		response.Msg = "find no space by sid "
-		logger.Log("Revise_Space_Err:", "find no space by sid ")
+		_ = logger.Log("Revise_Space_Err:", "find no space by sid ")
 		return response
 	}
 	if tokenuser != s.Userid {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = "can't revise another user's space"
-		logger.Log("Revise_Space_Err:", "can't revise another user's space")
+		_ = logger.Log("Revise_Space_Err:", "can't revise another user's space")
 		return response
 	}
 
@@ -238,11 +238,11 @@ func (this SpaceReviseService) ReviseSapce(r *SpaceReviseRequest) *CommonRespons
 	if err_upd != nil {
 		response.Code = Baseinfo.CONST_UPDATE_FAIL
 		response.Msg = err_upd.Error()
-		logger.Log("Revise_Space_Err:", err_upd.Error())
+		_ = logger.Log("Revise_Space_Err:", err_upd.Error())
 		return response
 	}
 	var reviseddpace *Baseinfo.Space
-	col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&reviseddpace)
+	_ = col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&reviseddpace)
 
 	response.Code = Baseinfo.Success
 	response.Data = reviseddpace
@@ -264,14 +264,14 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Delete_Space_Err:", err_checktoken.Error())
+		_ = logger.Log("Delete_Space_Err:", err_checktoken.Error())
 		return response
 	}
 	sid, err_obj := primitive.ObjectIDFromHex(r.Sid)
 	if err_obj != nil {
 		response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
 		response.Msg = err_obj.Error()
-		logger.Log("Delete_Space_Err:", err_obj.Error())
+		_ = logger.Log("Delete_Space_Err:", err_obj.Error())
 		return response
 	}
 
@@ -280,20 +280,20 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	if s == nil {
 		response.Code = Baseinfo.CONST_PARAM_ERROR
 		response.Msg = "no suc space ,pls check space id"
-		logger.Log("Delete_Space_Err:", "no suc space ,pls check space id")
+		_ = logger.Log("Delete_Space_Err:", "no suc space ,pls check space id")
 		return response
 	}
 	if err_find != nil {
 		response.Code = Baseinfo.CONST_FIND_FAIL
 		response.Msg = err_find.Error()
-		logger.Log("Delete_Space_Err:", err_find.Error())
+		_ = logger.Log("Delete_Space_Err:", err_find.Error())
 		return response
 	}
 
 	if tokenuser != s.Userid {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = "can't revise another user's space"
-		logger.Log("Delete_Space_Err:", "can't revise another user's space")
+		_ = logger.Log("Delete_Space_Err:", "can't revise another user's space")
 		return response
 	}
 
@@ -301,7 +301,7 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	if s.Devids != nil || len(s.Devids) > 0 {
 		response.Code = Baseinfo.CONST_ACTION_UNALLOWED
 		response.Msg = "devices are now hound in space,pls remove devices first !"
-		logger.Log("Delete_Space_Err:", "devices are now hound in space,pls remove devices first !")
+		_ = logger.Log("Delete_Space_Err:", "devices are now hound in space,pls remove devices first !")
 		return response
 	}
 
@@ -310,7 +310,7 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	response.Code = e
 	if m != nil {
 		response.Msg = m.(error).Error()
-		logger.Log("Delete_Space_Err:", m.(error).Error())
+		_ = logger.Log("Delete_Space_Err:", m.(error).Error())
 	}
 	return response
 }
@@ -331,7 +331,7 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Clone_Space_Err:", err_checktoken.Error())
+		_ = logger.Log("Clone_Space_Err:", err_checktoken.Error())
 		return response
 	}
 
@@ -339,23 +339,23 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 	if err_obj != nil {
 		response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
 		response.Msg = err_obj.Error()
-		logger.Log("Clone_Space_Err:", err_obj.Error())
+		_ = logger.Log("Clone_Space_Err:", err_obj.Error())
 		return response
 	}
 
 	var originlspace *Baseinfo.Space
-	col_space.FindOne(context.Background(), bson.D{{"_id", sid}}).Decode(&originlspace)
+	_ = col_space.FindOne(context.Background(), bson.D{{"_id", sid}}).Decode(&originlspace)
 	if originlspace == nil {
 		response.Code = Baseinfo.CONST_DATA_UNEXISTED
 		response.Msg = "can't find original space !"
-		logger.Log("Clone_Space_Err:", "can't find original space !")
+		_ = logger.Log("Clone_Space_Err:", "can't find original space !")
 		return response
 	}
 
 	if originlspace.Userid != tokenuser && originlspace.Userid != "" {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = "can't clone other user's space !"
-		logger.Log("Clone_Space_Err:", "can't clone other user's space !")
+		_ = logger.Log("Clone_Space_Err:", "can't clone other user's space !")
 		return response
 	}
 
@@ -364,14 +364,14 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 	if err_newdis != nil {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = "can't clone other user's space !"
-		logger.Log("Clone_Space_Err:", "can't clone other user's space !")
+		_ = logger.Log("Clone_Space_Err:", "can't clone other user's space !")
 		return response
 	}
 
 	var newdistrict *Baseinfo.District
 	code := newdistrictcode[6:]
 	discode := originlspace.Spacecode[:6]
-	col_dis.FindOne(context.Background(), bson.D{{"code", code}, {"dictionarycode", discode}}).Decode(&newdistrict)
+	_ = col_dis.FindOne(context.Background(), bson.D{{"code", code}, {"dictionarycode", discode}}).Decode(&newdistrict)
 	var newaddr string
 	if newdistrict != nil {
 		newaddr = Baseinfo.Getaddr(newdistrict.Mergeaddr, ",")
@@ -392,12 +392,12 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 	if err_ins != nil {
 		response.Code = Baseinfo.CONST_INSERT_FAIL
 		response.Msg = "clone space failed:" + err_ins.Error()
-		logger.Log("Clone_Space_Err:", "clone space failed:"+err_ins.Error())
+		_ = logger.Log("Clone_Space_Err:", "clone space failed:"+err_ins.Error())
 		return response
 	}
 
 	var newspaceinfo *Baseinfo.Space
-	col_space.FindOne(context.Background(), bson.D{{"_id", insertresult.InsertedID.(primitive.ObjectID)}}).Decode(&newspaceinfo)
+	_ = col_space.FindOne(context.Background(), bson.D{{"_id", insertresult.InsertedID.(primitive.ObjectID)}}).Decode(&newspaceinfo)
 	response.Code = Baseinfo.Success
 	response.Data = newspaceinfo
 	return response

@@ -24,7 +24,7 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Create_Device_Err:", err_checktoken.Error())
+		_ = logger.Log("Create_Device_Err:", err_checktoken.Error())
 		return response
 	}
 
@@ -45,11 +45,11 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 	if err_insert != nil {
 		response.Code = Baseinfo.CONST_INSERT_FAIL
 		response.Msg = err_insert.Error()
-		logger.Log("Create_Device_Err:", err_insert.Error())
+		_ = logger.Log("Create_Device_Err:", err_insert.Error())
 		return response
 	}
 	var newdevice *Baseinfo.Device
-	col_device.FindOne(context.Background(), bson.D{{"_id", result_insert_.InsertedID}}).Decode(&newdevice)
+	_ = col_device.FindOne(context.Background(), bson.D{{"_id", result_insert_.InsertedID}}).Decode(&newdevice)
 	response.Code = Baseinfo.Success
 	response.Data = newdevice
 	return response
@@ -70,7 +70,7 @@ func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonRespons
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Query_Device_Err:", err_checktoken.Error())
+		_ = logger.Log("Query_Device_Err:", err_checktoken.Error())
 		return response
 	}
 	var result *Baseinfo.Device
@@ -81,7 +81,7 @@ func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonRespons
 		if result == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Query_Device_Err:", err_find.Error())
+			_ = logger.Log("Query_Device_Err:", err_find.Error())
 			return response
 		}
 	} else { //c传入的是deviceid
@@ -89,20 +89,20 @@ func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonRespons
 		if result == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Query_Device_Err:", err_find.Error())
+			_ = logger.Log("Query_Device_Err:", err_find.Error())
 			return response
 		}
 	}
 	if result.Userid == "" {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = " can't query unbound devices!"
-		logger.Log("Query_Device_Err:", " can't query unbound devices!")
+		_ = logger.Log("Query_Device_Err:", " can't query unbound devices!")
 		return response
 	}
 	if tokenuser != result.Userid {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = " not allowed for another user' devices!"
-		logger.Log("Query_Device_Err:", " not allowed for another user' devices!")
+		_ = logger.Log("Query_Device_Err:", " not allowed for another user' devices!")
 		return response
 	}
 	response.Code = Baseinfo.Success
@@ -126,7 +126,7 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Delete_Device_Err:", err_checktoken.Error())
+		_ = logger.Log("Delete_Device_Err:", err_checktoken.Error())
 		return response
 	}
 	var dev *Baseinfo.Device
@@ -138,21 +138,21 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 		if dev == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Delete_Device_Err:", err_find.Error())
+			_ = logger.Log("Delete_Device_Err:", err_find.Error())
 			return response
 		}
 		spaceid = dev.Sid
 		if tokenuser != dev.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "no authority to delete another user' device !"
-			logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
+			_ = logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
 			return response
 		}
 		count, err_del := col_device.DeleteOne(context.Background(), bson.M{"_id": id})
 		if err_del != nil {
 			response.Code = Baseinfo.CONST_DELETE_FAIL
 			response.Msg = err_del.Error()
-			logger.Log("Delete_Device_Err:", err_del.Error())
+			_ = logger.Log("Delete_Device_Err:", err_del.Error())
 			return response
 		}
 		deletecount = count.DeletedCount
@@ -161,21 +161,21 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 		if dev == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Delete_Device_Err:", err_find.Error())
+			_ = logger.Log("Delete_Device_Err:", err_find.Error())
 			return response
 		}
 		spaceid = dev.Sid
 		if tokenuser != dev.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "no authority to delete another user' device !"
-			logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
+			_ = logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
 			return response
 		}
 		count, err_del := col_device.DeleteOne(context.Background(), bson.M{"deviceid": r.Deviceid})
 		if err_del != nil {
 			response.Code = Baseinfo.CONST_DELETE_FAIL
 			response.Msg = err_del.Error()
-			logger.Log("Delete_Device_Err:", err_del.Error())
+			_ = logger.Log("Delete_Device_Err:", err_del.Error())
 			return response
 		}
 		deletecount = count.DeletedCount
@@ -185,7 +185,7 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 	if spaceid != primitive.NilObjectID {
 		var devids []primitive.ObjectID
 		var space *Baseinfo.Space
-		col_space.FindOne(context.Background(), bson.D{{"_id", dev.Sid}}).Decode(&space)
+		_ = col_space.FindOne(context.Background(), bson.D{{"_id", dev.Sid}}).Decode(&space)
 		if space != nil {
 			for _, v := range space.Devids {
 				if v != dev.Id {
@@ -196,7 +196,7 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 			if err_upd != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err_upd.Error()
-				logger.Log("Delete_Device_Err: (fail to update coresponding sapce)", err_upd.Error())
+				_ = logger.Log("Delete_Device_Err: (fail to update coresponding sapce)", err_upd.Error())
 				return response
 			}
 		}
@@ -221,7 +221,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Revise_Device_Err:", err_checktoken.Error())
+		_ = logger.Log("Revise_Device_Err:", err_checktoken.Error())
 		return response
 	}
 	var device *Baseinfo.Device
@@ -233,13 +233,13 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		if device == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Revise_Device_Err:", err_find.Error())
+			_ = logger.Log("Revise_Device_Err:", err_find.Error())
 			return response
 		}
 		if tokenuser != device.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "no authority to delete another user' device !"
-			logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
+			_ = logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
 			return response
 		}
 		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
@@ -249,23 +249,23 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		if err_upd != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = err_upd.Error()
-			logger.Log("Revise_Device_Err:", err_upd.Error())
+			_ = logger.Log("Revise_Device_Err:", err_upd.Error())
 			return response
 		}
-		col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&revieddev)
+		_ = col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&revieddev)
 	} else {
 		//传入的是devid
 		err_find := col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&device)
 		if device == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Revise_Device_Err:", err_find.Error())
+			_ = logger.Log("Revise_Device_Err:", err_find.Error())
 			return response
 		}
 		if tokenuser != device.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "no authority to delete another user' device !"
-			logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
+			_ = logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
 			return response
 		}
 		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}, bson.D{{"$set", bson.D{
@@ -275,10 +275,10 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		if err_upd != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = err_upd.Error()
-			logger.Log("Revise_Device_Err:", err_upd.Error())
+			_ = logger.Log("Revise_Device_Err:", err_upd.Error())
 			return response
 		}
-		col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&revieddev)
+		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&revieddev)
 	}
 	response.Code = Baseinfo.Success
 	response.Data = revieddev
@@ -301,7 +301,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("Bind_Device_Err:", err_checktoken)
+		_ = logger.Log("Bind_Device_Err:", err_checktoken)
 		return response
 	}
 	deviceid := r.Deviceid
@@ -312,14 +312,14 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 	if deviceid == "" {
 		response.Code = Baseinfo.CONST_PARAM_LACK
 		response.Msg = "deviceid can't be nil!"
-		logger.Log("Bind_Device_Err:", "deviceid can't be nil!")
+		_ = logger.Log("Bind_Device_Err:", "deviceid can't be nil!")
 		return response
 	}
 
 	if tokenuser != userid && userid != "" {
 		response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 		response.Msg = "logining user and binding user is unmathced!"
-		logger.Log("Bind_Device_Err:", "logining user and binding user is unmathced!")
+		_ = logger.Log("Bind_Device_Err:", "logining user and binding user is unmathced!")
 		return response
 	}
 
@@ -332,7 +332,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		if dev == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Bind_Device_Err:", err_find)
+			_ = logger.Log("Bind_Device_Err:", err_find)
 			return response
 		}
 	} else {
@@ -341,7 +341,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		if dev == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = err_find.Error()
-			logger.Log("Bind_Device_Err:", err_find)
+			_ = logger.Log("Bind_Device_Err:", err_find)
 			return response
 		}
 	}
@@ -351,7 +351,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		if dev.Userid != "" {
 			response.Code = Baseinfo.CONST_PARAM_ERROR
 			response.Msg = "device has been bound!"
-			logger.Log("Bind_Device_Err:", "device has been bound!")
+			_ = logger.Log("Bind_Device_Err:", "device has been bound!")
 			return response
 		}
 		if isid {
@@ -359,7 +359,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 			if err_upd != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err_upd.Error()
-				logger.Log("Bind_Device_Err:", err_upd.Error())
+				_ = logger.Log("Bind_Device_Err:", err_upd.Error())
 				return response
 			}
 		} else {
@@ -367,7 +367,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 			if err_upd != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err_upd.Error()
-				logger.Log("Bind_Device_Err:", err_upd.Error())
+				_ = logger.Log("Bind_Device_Err:", err_upd.Error())
 				return response
 			}
 		}
@@ -377,11 +377,11 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 	if err_sid == nil {
 		var devids []primitive.ObjectID
 		var space *Baseinfo.Space
-		col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&space)
+		_ = col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&space)
 		if space == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = "find no space by sid!" //包含房源不存在的情况
-			logger.Log("Bind_Device_Err:", "find no space by sid!")
+			_ = logger.Log("Bind_Device_Err:", "find no space by sid!")
 			return response
 		}
 		devids = space.Devids
@@ -395,7 +395,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		if err_upd != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = err_upd.Error()
-			logger.Log("Bind_Device_Err:", err_upd)
+			_ = logger.Log("Bind_Device_Err:", err_upd)
 			return response
 		}
 		//跟新device表
@@ -408,7 +408,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 			if err_update != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err_update.Error()
-				logger.Log("Bind_Device_Err:", err_update)
+				_ = logger.Log("Bind_Device_Err:", err_update)
 				return response
 			}
 		} else {
@@ -420,29 +420,29 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 			if err1 != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err1.Error()
-				logger.Log("Bind_Device_Err:", err1)
+				_ = logger.Log("Bind_Device_Err:", err1)
 				return response
 			}
 		}
 	} else {
 		response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
 		response.Msg = "invalid spaceid"
-		logger.Log("Bind_Device_Err:", "invalid spaceid")
+		_ = logger.Log("Bind_Device_Err:", "invalid spaceid")
 		return response
 	}
 	if gatewayid != "" { //gatewayid只允许输入编号，不是_id
 		var gateway *Baseinfo.Device
-		col_device.FindOne(context.Background(), bson.D{{"deviceid", gatewayid}}).Decode(&gateway)
+		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", gatewayid}}).Decode(&gateway)
 		if gateway == nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = "can't find gateway"
-			logger.Log("Bind_Device_Err:", "can't find gateway")
+			_ = logger.Log("Bind_Device_Err:", "can't find gateway")
 			return response
 		}
 		if gateway.Userid != tokenuser {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "gateway has been bound in another user or not bound"
-			logger.Log("Bind_Device_Err:", "gateway has been bound in another user or not bound")
+			_ = logger.Log("Bind_Device_Err:", "gateway has been bound in another user or not bound")
 			return response
 		}
 		if isid {
@@ -450,7 +450,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 			if err != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err.Error()
-				logger.Log("Bind_Device_Err:", err.Error())
+				_ = logger.Log("Bind_Device_Err:", err.Error())
 				return response
 			}
 		} else {
@@ -458,7 +458,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 			if err != nil {
 				response.Code = Baseinfo.CONST_UPDATE_FAIL
 				response.Msg = err.Error()
-				logger.Log("Bind_Device_Err:", err.Error())
+				_ = logger.Log("Bind_Device_Err:", err.Error())
 				return response
 			}
 		}
@@ -466,9 +466,9 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 
 	var newdev *Baseinfo.Device
 	if isid {
-		col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&newdev)
+		_ = col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&newdev)
 	} else {
-		col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&newdev)
+		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&newdev)
 	}
 	response.Code = Baseinfo.Success
 	response.Data = newdev
@@ -490,7 +490,7 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 	if err_checktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = err_checktoken.Error()
-		logger.Log("unbound device err:", err_checktoken)
+		_ = logger.Log("unbound device err:", err_checktoken)
 		return response
 	}
 	deviceid := r.Deviceid
@@ -502,50 +502,50 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 	id, err_obj := primitive.ObjectIDFromHex(deviceid)
 	if err_obj == nil {
 		var dev *Baseinfo.Device
-		col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&dev)
+		_ = col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&dev)
 		if dev == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = "find no device!"
-			logger.Log("unbound device err:", "find no device!")
+			_ = logger.Log("unbound device err:", "find no device!")
 			return response
 		}
 		if tokenuser != dev.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "cant't operate another user' device!"
-			logger.Log("unbound device err:", "cant't operate another user' device!")
+			_ = logger.Log("unbound device err:", "cant't operate another user' device!")
 			return response
 		}
 		var node *Baseinfo.Device
-		col_device.FindOne(context.Background(), bson.D{{"gatewayid", dev.Deviceid}, {"isnode", true}}).Decode(&node)
+		_ = col_device.FindOne(context.Background(), bson.D{{"gatewayid", dev.Deviceid}, {"isnode", true}}).Decode(&node)
 		if node != nil {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "cant't unbound gateway with nodes under it!"
-			logger.Log("unbound device err:", "cant't unbound gateway with nodes under it!")
+			_ = logger.Log("unbound device err:", "cant't unbound gateway with nodes under it!")
 			return response
 		}
 		errcode, errmsg, data = Baseinfo.UnboundDeviceByid(dev, kind, col_device, col_space)
 
 	} else {
 		var dev *Baseinfo.Device
-		col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&dev)
+		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&dev)
 		if dev == nil {
 			response.Code = Baseinfo.CONST_FIND_FAIL
 			response.Msg = "find no device!"
-			logger.Log("unbound device err:", "find no device!")
+			_ = logger.Log("unbound device err:", "find no device!")
 			return response
 		}
 		if tokenuser != dev.Userid {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "cant't operate another user' device!"
-			logger.Log("unbound device err:", "cant't operate another user' device!")
+			_ = logger.Log("unbound device err:", "cant't operate another user' device!")
 			return response
 		}
 		var node *Baseinfo.Device
-		col_device.FindOne(context.Background(), bson.D{{"gatewayid", deviceid}, {"isnode", true}}).Decode(&node)
+		_ = col_device.FindOne(context.Background(), bson.D{{"gatewayid", deviceid}, {"isnode", true}}).Decode(&node)
 		if node != nil {
 			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
 			response.Msg = "cant't unbound gateway with nodes under it!"
-			logger.Log("unbound device err:", "cant't unbound gateway with nodes under it!")
+			_ = logger.Log("unbound device err:", "cant't unbound gateway with nodes under it!")
 			return response
 		}
 		errcode, errmsg, data = Baseinfo.UnboundDeviceBydeviceid(dev, kind, col_device, col_space)
@@ -584,7 +584,7 @@ func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonRespon
 	if err_ins != nil {
 		response.Code = Baseinfo.CONST_INSERT_FAIL
 		response.Msg = err_ins.Error()
-		logger.Log("upload data err:", err_ins)
+		_ = logger.Log("upload data err:", err_ins)
 		return response
 	}
 
@@ -604,7 +604,7 @@ func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonRespon
 		if updateresult.Err() != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = updateresult.Err().Error()
-			logger.Log("upload data err:", updateresult)
+			_ = logger.Log("upload data err:", updateresult)
 			return response
 		}
 	} else {
@@ -621,7 +621,7 @@ func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonRespon
 		if updateresult.Err() != nil {
 			response.Code = Baseinfo.CONST_UPDATE_FAIL
 			response.Msg = updateresult.Err().Error()
-			logger.Log("upload data err:", updateresult.Err().Error())
+			_ = logger.Log("upload data err:", updateresult.Err().Error())
 			return response
 		}
 	}
