@@ -3,7 +3,6 @@ package Baseinfo
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -27,30 +26,28 @@ var Expiredtime int //单位为秒
 func init() {
 	v := &Config{}
 
-	road := flag.String("conf", "./config.json", "config road")
-
-	flag.Parse()
-
-	var configdata []byte
-	data0, err0 := ioutil.ReadFile(*road)
-	if data0 == nil || err0 != nil {
-		data1, err1 := ioutil.ReadFile("./config.json")
-		if err1 != nil || data1 == nil {
-			log.Fatal("read default config err:", err1)
-			return
-		}
-		configdata = data1
-	} else {
-		configdata = data0
-	}
-
-	//本地
-	//configdata, err0 := ioutil.ReadFile("./Baseinfo/config.json")
-	//if err0 != nil {
-	//	log.Fatal(err0)
-	//	return
+	//road := flag.String("conf", "./config.json", "config road")
+	//flag.Parse()
+	//var configdata []byte
+	//data0, err0 := ioutil.ReadFile(*road)
+	//if data0 == nil || err0 != nil {
+	//	data1, err1 := ioutil.ReadFile("./config.json")
+	//	if err1 != nil || data1 == nil {
+	//		log.Fatal("read default config err:", err1)
+	//		return
+	//	}
+	//	configdata = data1
+	//} else {
+	//	configdata = data0
 	//}
-	//
+
+	//----本地-----------------
+	//configdata, err0 := ioutil.ReadFile("./Baseinfo/config.json")//本地，连接服务器数据库 3.0.
+	configdata, err0 := ioutil.ReadFile("./Baseinfo/config_localDB.json") //本地，连接本地数据库 4.2.2 无认证
+	if err0 != nil {
+		log.Fatal("read config.hson err:", err0)
+		return
+	}
 	//
 	err_j := json.Unmarshal(configdata, &v)
 	if err_j != nil {
@@ -58,15 +55,16 @@ func init() {
 		return
 	}
 	Expiredtime = v.Expiredtime
-	opts := options.Client().ApplyURI("mongodb://47.100.44.103:27017")
-	opts.SetAuth(options.Credential{
-		AuthMechanism:           "SCRAM-SHA-1",
-		AuthMechanismProperties: nil,
-		AuthSource:              v.Mongo.Authsource,
-		Username:                v.Mongo.Username,
-		Password:                v.Mongo.Password,
-		//	PasswordSet:             false,
-	})
+	//opts := options.Client().ApplyURI("mongodb://47.100.44.103:27017")
+	opts := options.Client().ApplyURI(v.Addr)
+	//opts.SetAuth(options.Credential{
+	//	AuthMechanism:           "SCRAM-SHA-1",
+	//	AuthMechanismProperties: nil,
+	//	AuthSource:              v.Mongo.Authsource,
+	//	Username:                v.Mongo.Username,
+	//	Password:                v.Mongo.Password,
+	//	//	PasswordSet:             false,
+	//})
 
 	Client, _ = mongo.Connect(context.Background(), opts)
 	//Client, err := mongo.Connect(context.Background(), opts)
@@ -75,8 +73,9 @@ func init() {
 	//}
 
 	if err := Client.Ping(context.Background(), readpref.Primary()); err != nil {
+		log.Fatal("fail to connect to mongo: ", err)
 		return
 	}
-	log.Println("connect successfully to mongodb ...")
+	log.Println("connect successfully to mongodb(" + v.Addr + ") ...")
 
 }

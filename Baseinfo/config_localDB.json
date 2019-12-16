@@ -1,0 +1,16 @@
+{
+  
+"addr":"mongodb://localhost:27018",
+ 
+ "mongo":{
+
+    "authsource":"",
+  
+  "username":"",
+ 
+   "password":""
+ 
+   } ,
+
+ "expiredtime":3600
+}

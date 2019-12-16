@@ -2,8 +2,10 @@ package Services
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"pro2/Baseinfo"
 	"time"
 )
@@ -41,15 +43,37 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 		Expand:    nil,
 		External:  nil,
 	}
-	result_insert_, err_insert := col_device.InsertOne(context.Background(), newdeviceinfo)
-	if err_insert != nil {
-		response.Code = Baseinfo.CONST_INSERT_FAIL
-		response.Msg = err_insert.Error()
-		_ = logger.Log("Create_Device_Err:", err_insert.Error())
+
+	ctx := context.Background()
+	var newdevice *Baseinfo.Device
+	SessionErr := Baseinfo.Client.Database("test").Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		result_insert_, err_insert := col_device.InsertOne(sessionContext, newdeviceinfo)
+		if err_insert != nil {
+			response.Code = Baseinfo.CONST_INSERT_FAIL
+			response.Msg = err_insert.Error()
+			_ = logger.Log("Create_Device_Err:", err_insert.Error())
+			return err_insert
+		}
+		err_f := col_device.FindOne(sessionContext, bson.D{{"_id", result_insert_.InsertedID}}).Decode(&newdevice)
+		if err_f != nil {
+			_ = sessionContext.AbortTransaction(sessionContext)
+			_ = logger.Log("Create_User_Err:", "can't find recently created user!"+err_f.Error())
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = err_f.Error()
+			return err_f
+		} else {
+			_ = sessionContext.CommitTransaction(sessionContext)
+		}
+		return nil
+	})
+	if SessionErr != nil {
+		_ = logger.Log("Create_Device_Err:", SessionErr)
 		return response
 	}
-	var newdevice *Baseinfo.Device
-	_ = col_device.FindOne(context.Background(), bson.D{{"_id", result_insert_.InsertedID}}).Decode(&newdevice)
 	response.Code = Baseinfo.Success
 	response.Data = newdevice
 	return response
@@ -132,76 +156,91 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 	var dev *Baseinfo.Device
 	var spaceid primitive.ObjectID
 	id, err_obj := primitive.ObjectIDFromHex(r.Deviceid)
-	if err_obj == nil {
-		//传入的时id
-		err_find := col_device.FindOne(context.Background(), bson.M{"_id": id}).Decode(&dev)
-		if dev == nil {
-			response.Code = Baseinfo.CONST_FIND_FAIL
-			response.Msg = err_find.Error()
-			_ = logger.Log("Delete_Device_Err:", err_find.Error())
-			return response
-		}
-		spaceid = dev.Sid
-		if tokenuser != dev.Userid {
-			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
-			response.Msg = "no authority to delete another user' device !"
-			_ = logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
-			return response
-		}
-		count, err_del := col_device.DeleteOne(context.Background(), bson.M{"_id": id})
-		if err_del != nil {
-			response.Code = Baseinfo.CONST_DELETE_FAIL
-			response.Msg = err_del.Error()
-			_ = logger.Log("Delete_Device_Err:", err_del.Error())
-			return response
-		}
-		deletecount = count.DeletedCount
-	} else { //传入的是deviceid
-		err_find := col_device.FindOne(context.Background(), bson.M{"deviceid": r.Deviceid}).Decode(&dev)
-		if dev == nil {
-			response.Code = Baseinfo.CONST_FIND_FAIL
-			response.Msg = err_find.Error()
-			_ = logger.Log("Delete_Device_Err:", err_find.Error())
-			return response
-		}
-		spaceid = dev.Sid
-		if tokenuser != dev.Userid {
-			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
-			response.Msg = "no authority to delete another user' device !"
-			_ = logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
-			return response
-		}
-		count, err_del := col_device.DeleteOne(context.Background(), bson.M{"deviceid": r.Deviceid})
-		if err_del != nil {
-			response.Code = Baseinfo.CONST_DELETE_FAIL
-			response.Msg = err_del.Error()
-			_ = logger.Log("Delete_Device_Err:", err_del.Error())
-			return response
-		}
-		deletecount = count.DeletedCount
-	}
 
-	//--清除sid信息
-	if spaceid != primitive.NilObjectID {
-		var devids []primitive.ObjectID
-		var space *Baseinfo.Space
-		_ = col_space.FindOne(context.Background(), bson.D{{"_id", dev.Sid}}).Decode(&space)
-		if space != nil {
-			for _, v := range space.Devids {
-				if v != dev.Id {
-					devids = append(devids, v)
+	ctx := context.Background()
+	SessionErr := Baseinfo.Client.Database("test").Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		if err_obj == nil {
+			//传入的时id
+			err_find := col_device.FindOne(sessionContext, bson.M{"_id": id}).Decode(&dev)
+			if dev == nil {
+				response.Code = Baseinfo.CONST_FIND_FAIL
+				response.Msg = err_find.Error()
+				_ = logger.Log("Delete_Device_Err:", err_find.Error())
+				return err_find
+			}
+			spaceid = dev.Sid
+			if tokenuser != dev.Userid {
+				response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+				response.Msg = "no authority to delete another user' device !"
+				_ = logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
+				return errors.New("no authority to delete another user' device !")
+			}
+			count, err_del := col_device.DeleteOne(sessionContext, bson.M{"_id": id})
+			if err_del != nil {
+				response.Code = Baseinfo.CONST_DELETE_FAIL
+				response.Msg = err_del.Error()
+				_ = logger.Log("Delete_Device_Err:", err_del.Error())
+				return err_del
+			}
+			deletecount = count.DeletedCount
+		} else { //传入的是deviceid
+			err_find := col_device.FindOne(sessionContext, bson.M{"deviceid": r.Deviceid}).Decode(&dev)
+			if dev == nil {
+				response.Code = Baseinfo.CONST_FIND_FAIL
+				response.Msg = err_find.Error()
+				_ = logger.Log("Delete_Device_Err:", err_find.Error())
+				return err_find
+			}
+			spaceid = dev.Sid
+			if tokenuser != dev.Userid {
+				response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+				response.Msg = "no authority to delete another user' device !"
+				_ = logger.Log("Delete_Device_Err:", "no authority to delete another user' device !")
+				return errors.New("no authority to delete another user' device !")
+			}
+			count, err_del := col_device.DeleteOne(sessionContext, bson.M{"deviceid": r.Deviceid})
+			if err_del != nil {
+				response.Code = Baseinfo.CONST_DELETE_FAIL
+				response.Msg = err_del.Error()
+				_ = logger.Log("Delete_Device_Err:", err_del.Error())
+				return err_del
+			}
+			deletecount = count.DeletedCount
+		}
+
+		//--清除sid信息
+		if spaceid != primitive.NilObjectID {
+			var devids []primitive.ObjectID
+			var space *Baseinfo.Space
+			_ = col_space.FindOne(sessionContext, bson.D{{"_id", dev.Sid}}).Decode(&space)
+			if space != nil {
+				for _, v := range space.Devids {
+					if v != dev.Id {
+						devids = append(devids, v)
+					}
+				}
+				_, err_upd := col_space.UpdateOne(sessionContext, bson.D{{"_id", dev.Sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
+				if err_upd != nil {
+					response.Code = Baseinfo.CONST_UPDATE_FAIL
+					response.Msg = "fail to update coresponding space! "
+					_ = sessionContext.AbortTransaction(sessionContext)
+					_ = logger.Log("Delete_Device_Err: (fail to update coresponding sapce)", err_upd.Error())
+					return err_upd
 				}
 			}
-			_, err_upd := col_space.UpdateOne(context.Background(), bson.D{{"_id", dev.Sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
-			if err_upd != nil {
-				response.Code = Baseinfo.CONST_UPDATE_FAIL
-				response.Msg = err_upd.Error()
-				_ = logger.Log("Delete_Device_Err: (fail to update coresponding sapce)", err_upd.Error())
-				return response
-			}
 		}
-	}
+		_ = sessionContext.CommitTransaction(sessionContext)
+		return nil
+	})
 
+	if SessionErr != nil {
+		_ = logger.Log("Delete_Device_Err:", SessionErr)
+		return response
+	}
 	response.Code = Baseinfo.Success
 	response.Data = deletecount
 	return response
@@ -227,58 +266,79 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 	var device *Baseinfo.Device
 	var revieddev *Baseinfo.Device
 	id, err_obj := primitive.ObjectIDFromHex(r.Deviceid)
-	if err_obj == nil {
-		//传入的是id
-		err_find := col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&device)
-		if device == nil {
-			response.Code = Baseinfo.CONST_FIND_FAIL
-			response.Msg = err_find.Error()
-			_ = logger.Log("Revise_Device_Err:", err_find.Error())
-			return response
+
+	ctx := context.Background()
+	SessionErr := Baseinfo.Client.Database("test").Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
 		}
-		if tokenuser != device.Userid {
-			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
-			response.Msg = "no authority to delete another user' device !"
-			_ = logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
-			return response
+		if err_obj == nil {
+			//传入的是id
+			err_find := col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&device)
+			if device == nil {
+				response.Code = Baseinfo.CONST_FIND_FAIL
+				response.Msg = err_find.Error()
+				_ = logger.Log("Revise_Device_Err:", err_find.Error())
+				return err_find
+			}
+			if tokenuser != device.Userid {
+				response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+				response.Msg = "no authority to delete another user' device !"
+				_ = logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
+				return errors.New("no authority to delete another user' device")
+			}
+
+			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
+				{"title", r.Title},
+				{"external", r.External},
+			}}})
+			if err_upd != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = "fail to update"
+				_ = logger.Log("Revise_Device_Err:", err_upd.Error())
+				return errors.New("fail to update ")
+			}
+			err_f := col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&revieddev)
+			if err_f != nil {
+				_ = sessionContext.AbortTransaction(sessionContext)
+				response.Msg = err_f.Error()
+				response.Msg = "can't find recently revised device"
+				return errors.New("can't find recently revised device")
+			}
+		} else {
+			//传入的是devid
+			err_find := col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&device)
+			if device == nil {
+				response.Code = Baseinfo.CONST_FIND_FAIL
+				response.Msg = "find no device to revise "
+				_ = logger.Log("Revise_Device_Err:", err_find.Error())
+				return errors.New("find no device to revise ")
+			}
+			if tokenuser != device.Userid {
+				response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+				response.Msg = "no authority to delete another user' device !"
+				_ = logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
+				return errors.New("no authority to delete another user' device")
+			}
+			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}, bson.D{{"$set", bson.D{
+				{"title", r.Title},
+				{"external", r.External},
+			}}})
+			if err_upd != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = "fail to update device"
+				_ = logger.Log("Revise_Device_Err:", err_upd.Error())
+				return errors.New("fail to update device")
+			}
+			_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&revieddev)
 		}
-		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
-			{"title", r.Title},
-			{"external", r.External},
-		}}})
-		if err_upd != nil {
-			response.Code = Baseinfo.CONST_UPDATE_FAIL
-			response.Msg = err_upd.Error()
-			_ = logger.Log("Revise_Device_Err:", err_upd.Error())
-			return response
-		}
-		_ = col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&revieddev)
-	} else {
-		//传入的是devid
-		err_find := col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&device)
-		if device == nil {
-			response.Code = Baseinfo.CONST_FIND_FAIL
-			response.Msg = err_find.Error()
-			_ = logger.Log("Revise_Device_Err:", err_find.Error())
-			return response
-		}
-		if tokenuser != device.Userid {
-			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
-			response.Msg = "no authority to delete another user' device !"
-			_ = logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
-			return response
-		}
-		_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}, bson.D{{"$set", bson.D{
-			{"title", r.Title},
-			{"external", r.External},
-		}}})
-		if err_upd != nil {
-			response.Code = Baseinfo.CONST_UPDATE_FAIL
-			response.Msg = err_upd.Error()
-			_ = logger.Log("Revise_Device_Err:", err_upd.Error())
-			return response
-		}
-		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&revieddev)
+		_ = sessionContext.CommitTransaction(sessionContext)
+		return nil
+	})
+	if SessionErr != nil {
+		_ = logger.Log("Revise_Device_Err:", SessionErr)
+		return response
 	}
 	response.Code = Baseinfo.Success
 	response.Data = revieddev

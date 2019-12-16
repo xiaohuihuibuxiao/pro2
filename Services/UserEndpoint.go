@@ -82,7 +82,7 @@ func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
 				Baseinfo.RecordOperation(r.Url, r.Method, r.Userid)
 			}
 
-			logger.Log("method", r.Method, "url", r.Url)
+			_ = logger.Log("method", r.Method, "url", r.Url)
 			return next(ctx, request)
 		}
 	}
