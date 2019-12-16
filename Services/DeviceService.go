@@ -275,7 +275,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 		}
 		if err_obj == nil {
 			//传入的是id
-			err_find := col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&device)
+			err_find := col_device.FindOne(sessionContext, bson.D{{"_id", id}}).Decode(&device)
 			if device == nil {
 				response.Code = Baseinfo.CONST_FIND_FAIL
 				response.Msg = err_find.Error()
@@ -289,7 +289,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 				return errors.New("no authority to delete another user' device")
 			}
 
-			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
+			_, err_upd := col_device.UpdateOne(sessionContext, bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
 				{"title", r.Title},
 				{"external", r.External},
 			}}})
@@ -308,7 +308,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 			}
 		} else {
 			//传入的是devid
-			err_find := col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&device)
+			err_find := col_device.FindOne(sessionContext, bson.D{{"deviceid", r.Deviceid}}).Decode(&device)
 			if device == nil {
 				response.Code = Baseinfo.CONST_FIND_FAIL
 				response.Msg = "find no device to revise "
@@ -321,7 +321,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 				_ = logger.Log("Revise_Device_Err:", "no authority to delete another user' device !")
 				return errors.New("no authority to delete another user' device")
 			}
-			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}, bson.D{{"$set", bson.D{
+			_, err_upd := col_device.UpdateOne(sessionContext, bson.D{{"deviceid", r.Deviceid}}, bson.D{{"$set", bson.D{
 				{"title", r.Title},
 				{"external", r.External},
 			}}})
@@ -331,7 +331,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 				_ = logger.Log("Revise_Device_Err:", err_upd.Error())
 				return errors.New("fail to update device")
 			}
-			_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", r.Deviceid}}).Decode(&revieddev)
+			_ = col_device.FindOne(sessionContext, bson.D{{"deviceid", r.Deviceid}}).Decode(&revieddev)
 		}
 		_ = sessionContext.CommitTransaction(sessionContext)
 		return nil
