@@ -2,8 +2,10 @@ package Services
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"pro2/Baseinfo"
 	"time"
 )
@@ -233,17 +235,36 @@ func (this SpaceReviseService) ReviseSapce(r *SpaceReviseRequest) *CommonRespons
 		return response
 	}
 
-	update := bson.D{{"$set", bson.D{{"title", r.Title}}}}
-	_, err_upd := col_space.UpdateOne(context.Background(), filter, update)
-	if err_upd != nil {
-		response.Code = Baseinfo.CONST_UPDATE_FAIL
-		response.Msg = err_upd.Error()
-		_ = logger.Log("Revise_Space_Err:", err_upd.Error())
+	var reviseddpace *Baseinfo.Space
+	SessionErr := Baseinfo.Client.Database("test").Client().UseSession(context.Background(), func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		update := bson.D{{"$set", bson.D{{"title", r.Title}}}}
+		_, err_upd := col_space.UpdateOne(sessionContext, filter, update)
+		if err_upd != nil {
+			response.Code = Baseinfo.CONST_UPDATE_FAIL
+			response.Msg = "fail to update space "
+			_ = logger.Log("Revise_Space_Err:", err_upd.Error())
+			return errors.New("fail to update space ")
+		}
+
+		e := col_space.FindOne(sessionContext, bson.D{{"_id", sid_obj}}).Decode(&reviseddpace)
+		if e != nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = "fail to find recently revised space "
+			_ = sessionContext.AbortTransaction(sessionContext)
+			_ = logger.Log("Revise_Space_Err:", err_upd.Error())
+			return errors.New("fail to find recently revised space ")
+		}
+		_ = sessionContext.CommitTransaction(sessionContext)
+		return nil
+	})
+	if SessionErr != nil {
+		_ = logger.Log("Revise_Space_Err:", SessionErr)
 		return response
 	}
-	var reviseddpace *Baseinfo.Space
-	_ = col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&reviseddpace)
-
 	response.Code = Baseinfo.Success
 	response.Data = reviseddpace
 	return response
@@ -306,11 +327,25 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	}
 
 	//该区域，以及下属的区域，全部删除！！！
-	e, m := Baseinfo.RemoveSpace(s, col_space)
-	response.Code = e
-	if m != nil {
-		response.Msg = m.(error).Error()
-		_ = logger.Log("Delete_Space_Err:", m.(error).Error())
+
+	SessionErr := Baseinfo.Client.Database("test").Client().UseSession(context.Background(), func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+		e, m := Baseinfo.RemoveSpace(s, sessionContext, col_space)
+		response.Code = e
+		if m != nil {
+			response.Msg = m.(error).Error()
+			_ = sessionContext.AbortTransaction(sessionContext)
+			_ = logger.Log("Delete_Space_Err:", m.(error).Error())
+		}
+		_ = sessionContext.CommitTransaction(sessionContext)
+		return nil
+	})
+	if SessionErr != nil {
+		_ = logger.Log("Delete_Space_Err:", SessionErr)
+		return response
 	}
 	return response
 }

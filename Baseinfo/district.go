@@ -69,24 +69,24 @@ func NewDistrict(updistrictcode string, dic *Dictionary, name, upname string, le
 	filter0 := bson.D{
 		{"_id", insert_r.InsertedID.(primitive.ObjectID)},
 	}
-	col.FindOne(context.Background(), filter0).Decode(&distri)
+	_ = col.FindOne(context.Background(), filter0).Decode(&distri)
 	return Success, nil, distri.Code
 }
 
 func CreateDistrict(s *Space, col_dis, col_dic *mongo.Collection) (error, string) {
 	//col--是district表
 	var district0 *District
-	col_dis.FindOne(context.Background(), bson.D{{"code", s.Spacecode[6:16]}, {"dictionarycode", s.Spacecode[:6]}}).Decode(&district0)
+	_ = col_dis.FindOne(context.Background(), bson.D{{"code", s.Spacecode[6:16]}, {"dictionarycode", s.Spacecode[:6]}}).Decode(&district0)
 	if district0 == nil {
 		return errors.New("no coresponding district for the space"), ""
 	}
 	var Up_district *District
-	col_dis.FindOne(context.Background(), bson.D{{"code", district0.Parentcode}, {"dictionarycode", s.Spacecode[:6]}}).Decode(&Up_district)
+	_ = col_dis.FindOne(context.Background(), bson.D{{"code", district0.Parentcode}, {"dictionarycode", s.Spacecode[:6]}}).Decode(&Up_district)
 	if Up_district == nil {
 		return errors.New("no coresponding upper district for the space"), ""
 	}
 	var dictionary0 *Dictionary
-	col_dic.FindOne(context.Background(), bson.D{{"code", district0.Dictionarycode}}).Decode(&dictionary0)
+	_ = col_dic.FindOne(context.Background(), bson.D{{"code", district0.Dictionarycode}}).Decode(&dictionary0)
 	if dictionary0 == nil {
 		return errors.New("no coresponding dictionary for the space"), ""
 	}

@@ -406,129 +406,164 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 		}
 	}
 
-	//绑定账号
-	if userid != "" {
-		if dev.Userid != "" {
-			response.Code = Baseinfo.CONST_PARAM_ERROR
-			response.Msg = "device has been bound!"
-			_ = logger.Log("Bind_Device_Err:", "device has been bound!")
-			return response
-		}
-		if isid {
-			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
-			if err_upd != nil {
-				response.Code = Baseinfo.CONST_UPDATE_FAIL
-				response.Msg = err_upd.Error()
-				_ = logger.Log("Bind_Device_Err:", err_upd.Error())
-				return response
-			}
-		} else {
-			_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
-			if err_upd != nil {
-				response.Code = Baseinfo.CONST_UPDATE_FAIL
-				response.Msg = err_upd.Error()
-				_ = logger.Log("Bind_Device_Err:", err_upd.Error())
-				return response
-			}
-		}
-	}
-	//sid为真实有效的id时，绑定房源
-	sid_obj, err_sid := primitive.ObjectIDFromHex(sid)
-	if err_sid == nil {
-		var devids []primitive.ObjectID
-		var space *Baseinfo.Space
-		_ = col_space.FindOne(context.Background(), bson.D{{"_id", sid_obj}}).Decode(&space)
-		if space == nil {
-			response.Code = Baseinfo.CONST_FIND_FAIL
-			response.Msg = "find no space by sid!" //包含房源不存在的情况
-			_ = logger.Log("Bind_Device_Err:", "find no space by sid!")
-			return response
-		}
-		devids = space.Devids
-		if isid {
-			devids = append(devids, id)
-		} else {
-			devids = append(devids, dev.Id)
-		}
-		//更新space表
-		_, err_upd := col_space.UpdateOne(context.Background(), bson.D{{"_id", sid_obj}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
-		if err_upd != nil {
-			response.Code = Baseinfo.CONST_UPDATE_FAIL
-			response.Msg = err_upd.Error()
-			_ = logger.Log("Bind_Device_Err:", err_upd)
-			return response
-		}
-		//跟新device表
-		if isid {
-			_, err_update := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
-				{"sid", sid_obj},
-				{"addr", space.Addr},
-				{"spacecode", space.Spacecode},
-			}}})
-			if err_update != nil {
-				response.Code = Baseinfo.CONST_UPDATE_FAIL
-				response.Msg = err_update.Error()
-				_ = logger.Log("Bind_Device_Err:", err_update)
-				return response
-			}
-		} else {
-			_, err1 := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{
-				{"sid", sid_obj},
-				{"addr", space.Addr},
-				{"spacecode", space.Spacecode},
-			}}})
-			if err1 != nil {
-				response.Code = Baseinfo.CONST_UPDATE_FAIL
-				response.Msg = err1.Error()
-				_ = logger.Log("Bind_Device_Err:", err1)
-				return response
-			}
-		}
-	} else {
-		response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
-		response.Msg = "invalid spaceid"
-		_ = logger.Log("Bind_Device_Err:", "invalid spaceid")
-		return response
-	}
-	if gatewayid != "" { //gatewayid只允许输入编号，不是_id
-		var gateway *Baseinfo.Device
-		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", gatewayid}}).Decode(&gateway)
-		if gateway == nil {
-			response.Code = Baseinfo.CONST_UPDATE_FAIL
-			response.Msg = "can't find gateway"
-			_ = logger.Log("Bind_Device_Err:", "can't find gateway")
-			return response
-		}
-		if gateway.Userid != tokenuser {
-			response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
-			response.Msg = "gateway has been bound in another user or not bound"
-			_ = logger.Log("Bind_Device_Err:", "gateway has been bound in another user or not bound")
-			return response
-		}
-		if isid {
-			_, err := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"gatewayid", gatewayid}}}})
-			if err != nil {
-				response.Code = Baseinfo.CONST_UPDATE_FAIL
-				response.Msg = err.Error()
-				_ = logger.Log("Bind_Device_Err:", err.Error())
-				return response
-			}
-		} else {
-			_, err := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"gatewayid", gatewayid}}}})
-			if err != nil {
-				response.Code = Baseinfo.CONST_UPDATE_FAIL
-				response.Msg = err.Error()
-				_ = logger.Log("Bind_Device_Err:", err.Error())
-				return response
-			}
-		}
-	}
-
 	var newdev *Baseinfo.Device
-	if isid {
-		_ = col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&newdev)
-	} else {
-		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&newdev)
+	ctx := context.Background()
+	SessionErr := Baseinfo.Client.Database("test").Client().UseSession(ctx, func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
+		}
+
+		//绑定账号
+		if userid != "" {
+			if dev.Userid != "" {
+				response.Code = Baseinfo.CONST_PARAM_ERROR
+				response.Msg = "device has been bound!"
+				_ = logger.Log("Bind_Device_Err:", "device has been bound!")
+				return errors.New("device has been bound")
+			}
+			if isid {
+				_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
+				if err_upd != nil {
+					response.Code = Baseinfo.CONST_UPDATE_FAIL
+					response.Msg = "fail to update userid"
+					_ = logger.Log("Bind_Device_Err:", err_upd.Error())
+					return errors.New("fail to update userid")
+				}
+			} else {
+				_, err_upd := col_device.UpdateOne(context.Background(), bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"userid", userid}}}})
+				if err_upd != nil {
+					response.Code = Baseinfo.CONST_UPDATE_FAIL
+					response.Msg = "fail to update userid"
+					_ = logger.Log("Bind_Device_Err:", err_upd.Error())
+					return errors.New("fail to update userid")
+				}
+			}
+		}
+
+		//sid为真实有效的id时，绑定房源
+		sid_obj, err_sid := primitive.ObjectIDFromHex(sid)
+		if err_sid == nil {
+			var devids []primitive.ObjectID
+			var space *Baseinfo.Space
+			_ = col_space.FindOne(sessionContext, bson.D{{"_id", sid_obj}}).Decode(&space)
+			if space == nil {
+				response.Code = Baseinfo.CONST_FIND_FAIL
+				response.Msg = "can't find space by sid!" //包含房源不存在的情况
+				_ = sessionContext.AbortTransaction(sessionContext)
+				_ = logger.Log("Bind_Device_Err:", "find no space by sid!")
+				return errors.New("find no space by sid")
+			}
+			devids = space.Devids
+			if isid {
+				devids = append(devids, id)
+			} else {
+				devids = append(devids, dev.Id)
+			}
+			//更新space表
+			_, err_upd := col_space.UpdateOne(sessionContext, bson.D{{"_id", sid_obj}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
+			if err_upd != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = "fail to update space info"
+				_ = sessionContext.AbortTransaction(sessionContext)
+				_ = logger.Log("Bind_Device_Err:", err_upd)
+				return errors.New("fail to update space info")
+			}
+			//跟新device表
+			if isid {
+				_, err_update := col_device.UpdateOne(sessionContext, bson.D{{"_id", id}}, bson.D{{"$set", bson.D{
+					{"sid", sid_obj},
+					{"addr", space.Addr},
+					{"spacecode", space.Spacecode},
+				}}})
+				if err_update != nil {
+					response.Code = Baseinfo.CONST_UPDATE_FAIL
+					response.Msg = "fail to update device'sid"
+					_ = sessionContext.AbortTransaction(sessionContext)
+					_ = logger.Log("Bind_Device_Err:", err_update)
+					return errors.New("fail to update device'sid")
+				}
+			} else {
+				_, err1 := col_device.UpdateOne(sessionContext, bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{
+					{"sid", sid_obj},
+					{"addr", space.Addr},
+					{"spacecode", space.Spacecode},
+				}}})
+				if err1 != nil {
+					response.Code = Baseinfo.CONST_UPDATE_FAIL
+					response.Msg = "fail to update device'sid"
+					_ = sessionContext.AbortTransaction(sessionContext)
+					_ = logger.Log("Bind_Device_Err:", err1)
+					return errors.New("fail to update device'sid")
+				}
+			}
+		} else {
+			response.Code = Baseinfo.CONST_UNMARSHALL_FAIL
+			response.Msg = "invalid spaceid"
+			_ = sessionContext.AbortTransaction(sessionContext)
+			_ = logger.Log("Bind_Device_Err:", err_sid.Error())
+			return errors.New("invalid spaceid")
+		}
+
+		// 绑定网关
+		if gatewayid != "" { //gatewayid只允许输入编号，不是_id
+			var gateway *Baseinfo.Device
+			_ = col_device.FindOne(sessionContext, bson.D{{"deviceid", gatewayid}}).Decode(&gateway)
+			if gateway == nil {
+				response.Code = Baseinfo.CONST_FIND_FAIL
+				response.Msg = "can't find gateway"
+				_ = sessionContext.AbortTransaction(sessionContext)
+				_ = logger.Log("Bind_Device_Err:", "can't find gateway")
+				return errors.New("can't find gateway")
+			}
+			if gateway.Userid != tokenuser {
+				response.Code = Baseinfo.CONST_UNAUTHORUTY_USER
+				response.Msg = "gateway has been bound in another user or not bound"
+				_ = sessionContext.AbortTransaction(sessionContext)
+				_ = logger.Log("Bind_Device_Err:", "gateway has been bound in another user or not bound")
+				return errors.New("gateway has been bound in another user or not bound")
+			}
+			if isid {
+				_, err := col_device.UpdateOne(sessionContext, bson.D{{"_id", id}}, bson.D{{"$set", bson.D{{"gatewayid", gatewayid}}}})
+				if err != nil {
+					response.Code = Baseinfo.CONST_UPDATE_FAIL
+					response.Msg = "fail to bind gateway for device"
+					_ = sessionContext.AbortTransaction(sessionContext)
+					_ = logger.Log("Bind_Device_Err:", err.Error())
+					return errors.New("fail to bind gateway for device")
+				}
+			} else {
+				_, err := col_device.UpdateOne(sessionContext, bson.D{{"deviceid", deviceid}}, bson.D{{"$set", bson.D{{"gatewayid", gatewayid}}}})
+				if err != nil {
+					response.Code = Baseinfo.CONST_UPDATE_FAIL
+					response.Msg = "fail to bind gateway for device"
+					_ = sessionContext.AbortTransaction(sessionContext)
+					_ = logger.Log("Bind_Device_Err:", err.Error())
+					return errors.New("fail to bind gateway for device")
+				}
+			}
+		}
+
+		var e error
+		if isid {
+			e = col_device.FindOne(sessionContext, bson.D{{"_id", id}}).Decode(&newdev)
+		} else {
+			e = col_device.FindOne(sessionContext, bson.D{{"deviceid", deviceid}}).Decode(&newdev)
+		}
+		if e != nil {
+			response.Code = Baseinfo.CONST_FIND_FAIL
+			response.Msg = "can't finf recently bound device"
+			_ = sessionContext.AbortTransaction(sessionContext)
+			_ = logger.Log("Bind_Device_Err:", e.Error())
+			return errors.New("can't finf recently bound device")
+		}
+		_ = sessionContext.CommitTransaction(sessionContext)
+		return nil
+
+	})
+	if SessionErr != nil {
+		_ = logger.Log("Bind_Device_Err:", SessionErr)
+		return response
 	}
 	response.Code = Baseinfo.Success
 	response.Data = newdev
@@ -560,6 +595,7 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 	var errmsg string
 	var data interface{}
 	id, err_obj := primitive.ObjectIDFromHex(deviceid)
+
 	if err_obj == nil {
 		var dev *Baseinfo.Device
 		_ = col_device.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&dev)
@@ -583,8 +619,17 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 			_ = logger.Log("unbound device err:", "cant't unbound gateway with nodes under it!")
 			return response
 		}
-		errcode, errmsg, data = Baseinfo.UnboundDeviceByid(dev, kind, col_device, col_space)
-
+		_ = Baseinfo.Client.Database("test").Client().UseSession(context.Background(), func(sessionContext mongo.SessionContext) error {
+			err := sessionContext.StartTransaction()
+			if err != nil {
+				return err
+			}
+			errcode, errmsg, data = Baseinfo.UnboundDeviceByid(dev, kind, sessionContext, col_device, col_space)
+			if errmsg != "" {
+				_ = sessionContext.AbortTransaction(sessionContext)
+			}
+			return nil
+		})
 	} else {
 		var dev *Baseinfo.Device
 		_ = col_device.FindOne(context.Background(), bson.D{{"deviceid", deviceid}}).Decode(&dev)
@@ -608,8 +653,19 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 			_ = logger.Log("unbound device err:", "cant't unbound gateway with nodes under it!")
 			return response
 		}
-		errcode, errmsg, data = Baseinfo.UnboundDeviceBydeviceid(dev, kind, col_device, col_space)
+		_ = Baseinfo.Client.Database("test").Client().UseSession(context.Background(), func(sessionContext mongo.SessionContext) error {
+			err := sessionContext.StartTransaction()
+			if err != nil {
+				return err
+			}
+			errcode, errmsg, data = Baseinfo.UnboundDeviceBydeviceid(dev, kind, sessionContext, col_device, col_space)
+			if errmsg != "" {
+				_ = sessionContext.AbortTransaction(sessionContext)
+			}
+			return nil
+		})
 	}
+
 	response.Code = errcode
 	response.Msg = errmsg
 	response.Data = data
@@ -639,51 +695,66 @@ func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonRespon
 		Expand:     r.Data,
 		External:   nil,
 	}
-	//记录至history表
-	_, err_ins := col_history.InsertOne(context.Background(), history)
-	if err_ins != nil {
-		response.Code = Baseinfo.CONST_INSERT_FAIL
-		response.Msg = err_ins.Error()
-		_ = logger.Log("upload data err:", err_ins)
-		return response
-	}
 
-	//更新device表的expand
-	id, err_obj := primitive.ObjectIDFromHex(deviceid)
-	if err_obj == nil {
-		filter := bson.D{{"_id", id}}
-		update := bson.D{{"$set", bson.D{{"expand", &struct {
-			T    string
-			Data interface{}
-		}{
-			T:    r.T,
-			Data: r.Data,
-		},
-		}}}}
-		updateresult := col_device.FindOneAndUpdate(context.Background(), filter, update)
-		if updateresult.Err() != nil {
-			response.Code = Baseinfo.CONST_UPDATE_FAIL
-			response.Msg = updateresult.Err().Error()
-			_ = logger.Log("upload data err:", updateresult)
-			return response
+	SessionErr := Baseinfo.Client.Database("test").Client().UseSession(context.Background(), func(sessionContext mongo.SessionContext) error {
+		err := sessionContext.StartTransaction()
+		if err != nil {
+			return err
 		}
-	} else {
-		filter := bson.D{{"deviceid", deviceid}}
-		update := bson.D{{"$set", bson.D{{"expand", &struct {
-			T    string
-			Data interface{}
-		}{
-			T:    r.T,
-			Data: r.Data,
-		},
-		}}}}
-		updateresult := col_device.FindOneAndUpdate(context.Background(), filter, update)
-		if updateresult.Err() != nil {
-			response.Code = Baseinfo.CONST_UPDATE_FAIL
-			response.Msg = updateresult.Err().Error()
-			_ = logger.Log("upload data err:", updateresult.Err().Error())
-			return response
+		//记录至history表
+		_, err_ins := col_history.InsertOne(sessionContext, history)
+		if err_ins != nil {
+			response.Code = Baseinfo.CONST_INSERT_FAIL
+			response.Msg = "fail to insert data to history "
+			_ = logger.Log("upload data err:", err_ins)
+			return errors.New("fail to insert data to history ")
 		}
+
+		//更新device表的expand
+		id, err_obj := primitive.ObjectIDFromHex(deviceid)
+		if err_obj == nil {
+			filter := bson.D{{"_id", id}}
+			update := bson.D{{"$set", bson.D{{"expand", &struct {
+				T    string
+				Data interface{}
+			}{
+				T:    r.T,
+				Data: r.Data,
+			},
+			}}}}
+			updateresult := col_device.FindOneAndUpdate(sessionContext, filter, update)
+			if updateresult.Err() != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = "fail to update device's history"
+				_ = sessionContext.AbortTransaction(sessionContext)
+				_ = logger.Log("upload data err:", updateresult)
+				return errors.New("fail to update device's history")
+			}
+		} else {
+			filter := bson.D{{"deviceid", deviceid}}
+			update := bson.D{{"$set", bson.D{{"expand", &struct {
+				T    string
+				Data interface{}
+			}{
+				T:    r.T,
+				Data: r.Data,
+			},
+			}}}}
+			updateresult := col_device.FindOneAndUpdate(sessionContext, filter, update)
+			if updateresult.Err() != nil {
+				response.Code = Baseinfo.CONST_UPDATE_FAIL
+				response.Msg = "fail to update device's history"
+				_ = sessionContext.AbortTransaction(sessionContext)
+				_ = logger.Log("Upload_Data_Err:", updateresult.Err().Error())
+				return errors.New("fail to update device's history")
+			}
+		}
+		_ = sessionContext.CommitTransaction(sessionContext)
+		return nil
+	})
+	if SessionErr != nil {
+		_ = logger.Log("Upload_Data_Err:", SessionErr)
+		return response
 	}
 	response.Code = Baseinfo.Success
 	return response

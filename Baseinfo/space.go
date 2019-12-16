@@ -26,10 +26,10 @@ func AddDev(hid primitive.ObjectID, devids []primitive.ObjectID) error {
 	return nil
 }
 
-func RemoveDev(sid, devid primitive.ObjectID, col *mongo.Collection) {
+func RemoveDev(sid, devid primitive.ObjectID, sessionContext mongo.SessionContext, col *mongo.Collection) {
 	var devids []primitive.ObjectID
 	var s *Space
-	col.FindOne(context.Background(), bson.D{{"_id", sid}}).Decode(&s)
+	_ = col.FindOne(sessionContext, bson.D{{"_id", sid}}).Decode(&s)
 	if s != nil {
 		for _, v := range s.Devids {
 			if v != devid {
@@ -37,22 +37,22 @@ func RemoveDev(sid, devid primitive.ObjectID, col *mongo.Collection) {
 			}
 		}
 	}
-	col.UpdateOne(context.Background(), bson.D{{"_id", sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
+	_, _ = col.UpdateOne(sessionContext, bson.D{{"_id", sid}}, bson.D{{"$set", bson.D{{"devids", devids}}}})
 }
 
-func RemoveSpace(s *Space, col *mongo.Collection) (int64, interface{}) {
+func RemoveSpace(s *Space, sessionContext mongo.SessionContext, col *mongo.Collection) (int64, interface{}) {
 	masterspace := s.Master
-	_, err := col.DeleteOne(context.Background(), bson.M{"_id": s.Id})
+	_, err := col.DeleteOne(sessionContext, bson.M{"_id": s.Id})
 	if err != nil {
 		return CONST_DELETE_FAIL, err.Error()
 	}
-	if masterspace != nil || len(masterspace) > 0 {
+	if masterspace != nil {
 		for _, nextspaceid := range masterspace {
 			var nextsapce *Space
 			nextsid, _ := primitive.ObjectIDFromHex(nextspaceid)
-			col.FindOne(context.Background(), bson.D{{"_id", nextsid}}).Decode(&nextsapce)
+			_ = col.FindOne(sessionContext, bson.D{{"_id", nextsid}}).Decode(&nextsapce)
 			if nextsapce != nil {
-				errcode, errmsg := RemoveSpace(nextsapce, col)
+				errcode, errmsg := RemoveSpace(nextsapce, sessionContext, col)
 				if errmsg != nil {
 					return errcode, errmsg
 				}
