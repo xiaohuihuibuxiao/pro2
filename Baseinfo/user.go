@@ -21,7 +21,7 @@ type User struct {
 
 func Loginauth(user, pwd string) (string, int64, error) {
 	if user == "" {
-		return "", CONST_PARAM_LACK, errors.New("userid can't be blank !")
+		return "", CONST_PARAM_LACK, errors.New("userid can't be blank")
 	}
 	col_user := Client.Database("test").Collection("user")
 	var userinfo *User

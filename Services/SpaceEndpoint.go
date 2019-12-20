@@ -20,6 +20,7 @@ type SpaceCreateRequest struct {
 	Title    string `json:"title"`
 }
 
+//TODO 强转雷西不过错误的情况处理
 func SpaceCreateEndpoint(spacecreateservice WSpaceCreateService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		r := request.(*SpaceCreateRequest)

@@ -29,7 +29,7 @@ type Device struct {
 }
 
 //解绑设备方法
-func UnboundDeviceBydeviceid(dev *Device, kind string, sessionContext mongo.SessionContext, col_dev, col_space *mongo.Collection) (errcode int64, errmsg string, data interface{}) {
+func UnboundDeviceBydeviceid(dev *Device, kind string, sessionContext mongo.SessionContext, colDev, colSpace *mongo.Collection) (errcode int64, errmsg string, data interface{}) {
 	filter := bson.D{{"deviceid", dev.Deviceid}}
 	var update bsonx.Doc
 
@@ -43,7 +43,7 @@ func UnboundDeviceBydeviceid(dev *Device, kind string, sessionContext mongo.Sess
 				{"spacecode", bsonx.String("")},
 			})}}
 		if dev.Sid != primitive.NilObjectID {
-			RemoveDev(dev.Sid, dev.Id, sessionContext, col_space)
+			RemoveDev(dev.Sid, dev.Id, sessionContext, colSpace)
 		}
 
 	case "1": //解绑账户关联
@@ -60,21 +60,21 @@ func UnboundDeviceBydeviceid(dev *Device, kind string, sessionContext mongo.Sess
 				{"spacecode", bsonx.String("")},
 			})}}
 		if dev.Sid != primitive.NilObjectID {
-			RemoveDev(dev.Sid, dev.Id, sessionContext, col_space)
+			RemoveDev(dev.Sid, dev.Id, sessionContext, colSpace)
 		}
 	default:
 		return CONST_PARAM_ERROR, "operate type is out of range", nil
 	}
-	_, err := col_dev.UpdateOne(sessionContext, filter, update)
+	_, err := colDev.UpdateOne(sessionContext, filter, update)
 	if err != nil {
 		return Fail, err.Error(), nil
 	}
 	var device *Device
-	_ = col_dev.FindOne(context.Background(), bson.D{{"deviceid", dev.Deviceid}}).Decode(&device)
+	_ = colDev.FindOne(context.Background(), bson.D{{"deviceid", dev.Deviceid}}).Decode(&device)
 	return Success, "", device
 }
 
-func UnboundDeviceByid(dev *Device, kind string, sessionContext mongo.SessionContext, col_dev, col_space *mongo.Collection) (errcode int64, errmsg string, data interface{}) {
+func UnboundDeviceByid(dev *Device, kind string, sessionContext mongo.SessionContext, colDev, colSpace *mongo.Collection) (errcode int64, errmsg string, data interface{}) {
 	filter := bson.D{{"_id", dev.Id}}
 	var update bsonx.Doc
 
@@ -88,7 +88,7 @@ func UnboundDeviceByid(dev *Device, kind string, sessionContext mongo.SessionCon
 				{"spacecode", bsonx.String("")},
 			})}}
 		if dev.Sid != primitive.NilObjectID {
-			RemoveDev(dev.Sid, dev.Id, sessionContext, col_space)
+			RemoveDev(dev.Sid, dev.Id, sessionContext, colSpace)
 		}
 	case "1":
 		update = bsonx.Doc{{"$set", bsonx.Document(
@@ -104,17 +104,17 @@ func UnboundDeviceByid(dev *Device, kind string, sessionContext mongo.SessionCon
 				{"spacecode", bsonx.String("")},
 			})}}
 		if dev.Sid != primitive.NilObjectID {
-			RemoveDev(dev.Sid, dev.Id, sessionContext, col_space)
+			RemoveDev(dev.Sid, dev.Id, sessionContext, colSpace)
 		}
 	default:
 		return CONST_PARAM_ERROR, "operatie type is out of range", nil
 	}
-	_, err := col_dev.UpdateOne(sessionContext, filter, update)
+	_, err := colDev.UpdateOne(sessionContext, filter, update)
 	if err != nil {
 		return Fail, err.Error(), nil
 	}
 	var device *Device
-	_ = col_dev.FindOne(sessionContext, bson.D{{"deviceid", dev.Deviceid}}).Decode(&device)
+	_ = colDev.FindOne(sessionContext, bson.D{{"deviceid", dev.Deviceid}}).Decode(&device)
 	return Success, "", dev
 }
 

@@ -87,7 +87,7 @@ func DecodeDeviceReviseRequest(ctx context.Context, r *http.Request) (interface{
 		External map[string]interface{} `json:"external"`
 	}
 	body, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal(body, &bodyinfo)
+	_ = json.Unmarshal(body, &bodyinfo)
 	ok, _, userid := Baseinfo.TokenCheck_asymmetricalkey(r.Header.Get("token"))
 	if ok {
 		Baseinfo.RecordOperation(r.URL.String(), r.Method, userid)

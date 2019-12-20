@@ -75,5 +75,7 @@ func Init() *mymux.Router {
 	// 直接解绑设备然后新建空间再绑定就好
 	r.Methods("POST").Path(`/space/clone/{sid}`).Handler(spaceclone_handler) //--复制空间--ok
 
+	//将某一级以及以下的设备全都迁移到另一个空间下面（层级关系肯定得不能乱）
+
 	return r
 }

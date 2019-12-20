@@ -2,7 +2,6 @@ package Services
 
 import (
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -45,11 +44,11 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 	commonresponse := &CommonResponse{}
 	col_user := Baseinfo.Client.Database("test").Collection("user")
 
-	err_find := col_user.FindOne(context.Background(), bson.M{"userid": r.Userid}).Decode(&finduser)
-	if err_find != nil && err_find.Error() != "mongo: no documents in result" {
+	ErrFind := col_user.FindOne(context.Background(), bson.M{"userid": r.Userid}).Decode(&finduser)
+	if ErrFind != nil && ErrFind.Error() != "mongo: no documents in result" {
 		commonresponse.Code = Baseinfo.CONST_FIND_FAIL
-		commonresponse.Msg = err_find.Error()
-		_ = logger.Log("Create_User_Err:", "find user by userid in mongo fails", "mongo error:", err_find)
+		commonresponse.Msg = ErrFind.Error()
+		_ = logger.Log("Create_User_Err:", "find user by userid in mongo fails", "mongo error:", ErrFind)
 		return commonresponse
 	}
 	if finduser != nil { //没有报错且找到了该用户 说明已经被注册了
@@ -70,7 +69,6 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 		Email:    r.Email,
 		External: nil,
 	}
-	fmt.Println(newuser)
 	ctx := context.Background()
 
 	var newuserinfo *Baseinfo.User
@@ -80,21 +78,21 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 			return err
 		}
 
-		ins_result, err_insert := col_user.InsertOne(sessionContext, &newuser)
-		if err_insert != nil {
+		InsResult, ErrInsert := col_user.InsertOne(sessionContext, &newuser)
+		if ErrInsert != nil {
 			commonresponse.Code = Baseinfo.CONST_INSERT_FAIL
-			commonresponse.Msg = err_insert.Error()
-			_ = logger.Log("Create_User_Err:", err_insert.Error())
-			return err_insert
+			commonresponse.Msg = ErrInsert.Error()
+			_ = logger.Log("CreateUserErr:", ErrInsert.Error())
+			return ErrInsert
 		}
 
-		err_f := col_user.FindOne(sessionContext, bson.D{{"_id", ins_result.InsertedID.(primitive.ObjectID)}}).Decode(&newuserinfo)
-		if err_f != nil {
+		ErrF := col_user.FindOne(sessionContext, bson.D{{"_id", InsResult.InsertedID.(primitive.ObjectID)}}).Decode(&newuserinfo)
+		if ErrF != nil {
 			_ = sessionContext.AbortTransaction(sessionContext)
-			_ = logger.Log("Create_User_Err:", "can't find recently created user!"+err_f.Error())
+			_ = logger.Log("CreateUserErr:", "can't find recently created user!"+ErrF.Error())
 			commonresponse.Code = Baseinfo.CONST_FIND_FAIL
-			commonresponse.Msg = err_f.Error()
-			return err_f
+			commonresponse.Msg = ErrF.Error()
+			return ErrF
 		} else {
 			_ = sessionContext.CommitTransaction(sessionContext)
 		}
