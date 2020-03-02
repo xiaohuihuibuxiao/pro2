@@ -13,8 +13,9 @@ type Device struct {
 	Id        primitive.ObjectID `json:"id" bson:"_id"`
 	Sid       primitive.ObjectID //objectid
 	Userid    string
-	Gatewayid string //产品所属网关的编号
-	Deviceid  string //产品本code，第三方设备传感器 主要是面向运维或者非技术人员查看的编号
+	Gatewayid string                 //产品所属网关的编号
+	Params    map[string]interface{} //设备参数 比如在大厅内的x y坐标位置
+	Deviceid  string                 //产品本code，第三方设备传感器 主要是面向运维或者非技术人员查看的编号
 	//产品所属网关的编号 如果设备本身即有联网功能 则自己就是自己的网关
 	Isnode  bool  //显示设备本身为节点还是网关
 	Devtype int64 //不同类型的设备（传感器），有不同的devtype 为方便查看，可以直接使用二进制数的不同位来表示

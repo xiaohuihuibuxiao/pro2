@@ -32,6 +32,7 @@ func Init() *mymux.Router {
 
 	//---用户相关----
 	limit := rate.NewLimiter(1, 5) // 限制频繁登陆操作
+	//endp := UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{}))
 	endp := RateLimit(limit)(UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{})))
 	//userlogin_handler := httptransport.NewServer(UserLoginEndpoint(UserLoginService{}), DecodeUserLoginRequest, EncodeuUserLoginResponse)
 	userlogin_handler := httptransport.NewServer(endp, DecodeUserLoginRequest, EncodeuUserLoginResponse)
