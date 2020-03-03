@@ -159,3 +159,37 @@ func (this UserDelService) UserDel(userid string) *CommonResponse {
 		Expand: nil,
 	}
 }
+
+//------------------修改用户密码------------------
+type WUserResetService interface {
+	UserReset(r *UserResetRequest) *CommonResponse
+}
+
+type UserResetService struct{}
+
+func (this UserResetService) UserReset(r *UserResetRequest) *CommonResponse {
+	fmt.Println("进入修改密码接口", r)
+	return &CommonResponse{
+		Code:   200,
+		Msg:    "",
+		Data:   nil,
+		Expand: nil,
+	}
+}
+
+//------------------用户注销------------------
+type WUserLogoutService interface {
+	UserLogout(userid string) *CommonResponse
+}
+
+type UserLogoutService struct{}
+
+func (this UserLogoutService) UserLogout(userid string) *CommonResponse {
+	fmt.Println("进入用户注销接口", userid)
+	return &CommonResponse{
+		Code:   200,
+		Msg:    "",
+		Data:   nil,
+		Expand: nil,
+	}
+}

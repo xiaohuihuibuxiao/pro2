@@ -20,8 +20,8 @@ type CommonResponse struct {
 
 //--------登陆-----------
 type UserLoginRequest struct {
-	Userid   string `json:"userid"`
-	Password string `json:"password"`
+	Userid   string `json:"Userid"`
+	Password string `json:"Password"`
 	Method   string `json:"method"`
 	Url      string `json:"url"`
 }
@@ -147,6 +147,34 @@ func UserDelEndpoint(userDelService WUserDelService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		r := request.(*UserDelRequest)
 		result := userDelService.UserDel(r.Userid)
+		return result, nil
+	}
+}
+
+//--------修改用户密码----------
+type UserResetRequest struct {
+	Userid           string `json:"Userid"`
+	Originalpassword string `json:"Originalpassword"`
+	Newpassword      string `json:"Newpassword"`
+}
+
+func UserResetEndpoint(userResetService WUserResetService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*UserResetRequest)
+		result := userResetService.UserReset(r)
+		return result, nil
+	}
+}
+
+//--------用户注销----------
+type UserLogoutRequest struct {
+	Userid string `json:"Userid"`
+}
+
+func UserLogoutEndpoint(userLogoutService WUserLogoutService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*UserLogoutRequest)
+		result := userLogoutService.UserLogout(r.Userid)
 		return result, nil
 	}
 }

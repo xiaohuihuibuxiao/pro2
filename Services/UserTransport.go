@@ -11,24 +11,20 @@ import (
 
 //------------------登陆---------------------------------
 func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	var userid string = ""
-	vars := mymux.Vars(r)
-	if user, ok := vars["userid"]; ok {
-		userid = user
-	}
+
 	body, _ := ioutil.ReadAll(r.Body)
 	var bodyinfo struct {
-		Password string `json:"password"`
+		Userid   string `json:"Userid"`
+		Password string `json:"Password"`
 	}
 	json.Unmarshal(body, &bodyinfo)
 	password := bodyinfo.Password
-	a := &UserLoginRequest{
-		Userid:   userid,
+	return &UserLoginRequest{
+		Userid:   bodyinfo.Userid,
 		Password: password,
 		Method:   r.Method,
 		Url:      r.URL.String(),
-	}
-	return a, nil
+	}, nil
 }
 
 func EncodeuUserLoginResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
@@ -133,8 +129,36 @@ func DecodeUserDelRequest(ctx context.Context, r *http.Request) (interface{}, er
 	if user, ok := vars["userid"]; ok {
 		userid = user
 	}
-	return &UserEditRequest{
+	return &UserDelRequest{
 		Userid: userid,
+	}, nil
+}
+
+//------------------修改用户密码-------------------------
+func DecodeUserResetRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	body, _ := ioutil.ReadAll(r.Body)
+	var bodyinfo struct {
+		Userid           string `json:"Userid"`
+		Originalpassword string `json:"Originalpassword"`
+		Newpassword      string `json:"Newpassword"`
+	}
+	_ = json.Unmarshal(body, &bodyinfo)
+	return &UserResetRequest{
+		Userid:           bodyinfo.Userid,
+		Originalpassword: bodyinfo.Originalpassword,
+		Newpassword:      bodyinfo.Newpassword,
+	}, nil
+}
+
+//------------------用户注销-------------------------
+func DecodeUserLogoutRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	body, _ := ioutil.ReadAll(r.Body)
+	var bodyinfo struct {
+		Userid string `json:"Userid"`
+	}
+	_ = json.Unmarshal(body, &bodyinfo)
+	return &UserLogoutRequest{
+		Userid: bodyinfo.Userid,
 	}, nil
 }
 

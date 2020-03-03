@@ -32,8 +32,6 @@ func Init() *mymux.Router {
 
 	//---用户管理----
 	limit := rate.NewLimiter(1, 5) // 限制频繁登陆操作
-	userlogin_handler := httptransport.NewServer(RateLimit(limit)(UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{}))), DecodeUserLoginRequest, EncodeuUserLoginResponse)
-	r.Methods("POST").Path(`/user/login/{userid}`).Handler(userlogin_handler) //--登陆--ok
 
 	//httptransport.NewServer(UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{})), DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
 
@@ -41,12 +39,18 @@ func Init() *mymux.Router {
 	userListHandler := httptransport.NewServer(UserListEndpoint(UserListService{}), DecodeUserListRequest, EncodeuUserResponse)
 	userCreateHandler := httptransport.NewServer(UserCreateEndpoint(UserCreateService{}), DecodeUserCreateRequest, EncodeuUserResponse)
 	userEditHandler := httptransport.NewServer(UserEditEndpoint(UserEditService{}), DecodeUserEditRequest, EncodeuUserResponse)
-	userDelHandler := httptransport.NewServer(UserEditEndpoint(UserEditService{}), DecodeUserEditRequest, EncodeuUserResponse)
+	userDelHandler := httptransport.NewServer(UserDelEndpoint(UserDelService{}), DecodeUserDelRequest, EncodeuUserResponse)
+	userResetHandler := httptransport.NewServer(UserResetEndpoint(UserResetService{}), DecodeUserResetRequest, EncodeuUserResponse)
+	userLoginHandler := httptransport.NewServer(RateLimit(limit)(UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{}))), DecodeUserLoginRequest, EncodeuUserLoginResponse)
+	userLogoutHandler := httptransport.NewServer(UserLogoutEndpoint(UserLogoutService{}), DecodeUserLogoutRequest, EncodeuUserResponse)
 
-	r.Methods("GET").Path(`/isms/v1/user`).Handler(userListHandler)            //--3.1.1获取用户列表
-	r.Methods("POST").Path(`/isms/v1/user`).Handler(userCreateHandler)         //--3.1.2创建用户
-	r.Methods("PUT").Path(`/isms/v1/user/{userid}`).Handler(userEditHandler)   //--3.1.3编辑用户
-	r.Methods("DELETE").Path(`/isms/v1/user/{userid}`).Handler(userDelHandler) //--3.1.4删除用户
+	r.Methods("GET").Path(`/isms/v1/user`).Handler(userListHandler)              //--3.1.1获取用户列表
+	r.Methods("POST").Path(`/isms/v1/user`).Handler(userCreateHandler)           //--3.1.2创建用户
+	r.Methods("PUT").Path(`/isms/v1/user/{userid}`).Handler(userEditHandler)     //--3.1.3编辑用户
+	r.Methods("DELETE").Path(`/isms/v1/user/{userid}`).Handler(userDelHandler)   //--3.1.4删除用户
+	r.Methods("DELETE").Path(`/isms/v1/user/resetpwd`).Handler(userResetHandler) //--3.1.5 更改用户密码
+	r.Methods("POST").Path(`/isms/v1//user/login`).Handler(userLoginHandler)     //--3.1.6 用户登陆
+	r.Methods("POST").Path(`/isms/v1//user/logout`).Handler(userLogoutHandler)   //--3.1.6 用户注销
 
 	//-----设备相关----
 	devicecreate_handler := httptransport.NewServer(DeviceCreateEndpoint(DeviceCreateService{}), DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
