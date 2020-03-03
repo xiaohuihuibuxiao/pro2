@@ -2,6 +2,7 @@ package Services
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -106,4 +107,55 @@ func (this UserCreateService) NewAccount(r *UserCreateRequest) *CommonResponse {
 	commonresponse.Code = Baseinfo.Success
 	commonresponse.Data = newuserinfo
 	return commonresponse
+}
+
+//------------------获取用户列表------------------
+type WUserListService interface {
+	ObtainUserList() *CommonResponse
+}
+
+type UserListService struct{}
+
+func (this UserListService) ObtainUserList() *CommonResponse {
+	fmt.Println("进入获取用户列表接口")
+	return &CommonResponse{
+		Code:   200,
+		Msg:    "",
+		Data:   nil,
+		Expand: nil,
+	}
+}
+
+//------------------编辑用户------------------
+type WUserEditService interface {
+	UserEdit(r *UserEditRequest) *CommonResponse
+}
+
+type UserEditService struct{}
+
+func (this UserEditService) UserEdit(r *UserEditRequest) *CommonResponse {
+	fmt.Println("进入编辑用户接口", r)
+	return &CommonResponse{
+		Code:   200,
+		Msg:    "",
+		Data:   nil,
+		Expand: nil,
+	}
+}
+
+//------------------删除用户------------------
+type WUserDelService interface {
+	UserDel(userid string) *CommonResponse
+}
+
+type UserDelService struct{}
+
+func (this UserDelService) UserDel(userid string) *CommonResponse {
+	fmt.Println("进入删除接口", userid)
+	return &CommonResponse{
+		Code:   200,
+		Msg:    "",
+		Data:   nil,
+		Expand: nil,
+	}
 }

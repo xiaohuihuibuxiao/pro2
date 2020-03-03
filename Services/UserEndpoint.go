@@ -107,3 +107,46 @@ func CheckTokenMiddleware() endpoint.Middleware {
 		}
 	}
 }
+
+//--------获取用户列表----------
+type UserListRequest struct {
+}
+
+func UserListEndpoint(userListService WUserListService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		//r := request.(*UserListRequest)
+		//fmt.Println("接收到的r为",r)
+		result := userListService.ObtainUserList()
+		return result, nil
+	}
+}
+
+//--------编辑用户----------
+type UserEditRequest struct {
+	Userid   string `json:"userid"`
+	Phone    string `json:"Phone"`
+	Title    string `json:"Title"`
+	Nickname string `json:"Nickname"`
+	Email    string `json:"Email"`
+}
+
+func UserEditEndpoint(userEditService WUserEditService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*UserEditRequest)
+		result := userEditService.UserEdit(r)
+		return result, nil
+	}
+}
+
+//--------删除用户----------
+type UserDelRequest struct {
+	Userid string `json:"userid"`
+}
+
+func UserDelEndpoint(userDelService WUserDelService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*UserDelRequest)
+		result := userDelService.UserDel(r.Userid)
+		return result, nil
+	}
+}

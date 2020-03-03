@@ -76,5 +76,69 @@ func MyErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(500)
 		w.Write(body)
 	}
+}
 
+//------------------获取用户列表-------------------------
+//TODO 函数的实现
+func DecodeUserListRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+
+	//var userid string = ""
+	//vars := mymux.Vars(r)
+	//if user, ok := vars["userid"]; ok {
+	//	userid = user
+	//}
+	//body, _ := ioutil.ReadAll(r.Body)
+	//var bodyinfo struct {
+	//	Password string `json:"password"`
+	//}
+	//json.Unmarshal(body, &bodyinfo)
+	//password := bodyinfo.Password
+	//a := &UserLoginRequest{
+	//	Userid:   userid,
+	//	Password: password,
+	//	Method:   r.Method,
+	//	Url:      r.URL.String(),
+	//}
+	return nil, nil
+}
+
+//------------------编辑用户-------------------------
+func DecodeUserEditRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var userid string = ""
+	vars := mymux.Vars(r)
+	if user, ok := vars["userid"]; ok {
+		userid = user
+	}
+	body, _ := ioutil.ReadAll(r.Body)
+	var bodyinfo struct {
+		Phone    string `json:"Phone"`
+		Title    string `json:"title"`
+		Nickname string `json:"nickname"`
+		Email    string `json:"Email"`
+	}
+	_ = json.Unmarshal(body, &bodyinfo)
+	return &UserEditRequest{
+		Userid:   userid,
+		Phone:    bodyinfo.Phone,
+		Title:    bodyinfo.Title,
+		Nickname: bodyinfo.Nickname,
+		Email:    bodyinfo.Email,
+	}, nil
+}
+
+//------------------删除用户-------------------------
+func DecodeUserDelRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var userid string = ""
+	vars := mymux.Vars(r)
+	if user, ok := vars["userid"]; ok {
+		userid = user
+	}
+	return &UserEditRequest{
+		Userid: userid,
+	}, nil
+}
+
+func EncodeuUserResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
 }
