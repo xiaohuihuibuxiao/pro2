@@ -14,7 +14,7 @@ type Device struct {
 	Sid       primitive.ObjectID //objectid
 	Userid    string
 	Gatewayid string                 //产品所属网关的编号
-	Params    map[string]interface{} //设备参数 比如在大厅内的x y坐标位置
+	Params    map[string]interface{} //TODO 设备参数 比如在大厅内的x y坐标位置
 	Deviceid  string                 //产品本code，第三方设备传感器 主要是面向运维或者非技术人员查看的编号
 	//产品所属网关的编号 如果设备本身即有联网功能 则自己就是自己的网关
 	Isnode  bool  //显示设备本身为节点还是网关

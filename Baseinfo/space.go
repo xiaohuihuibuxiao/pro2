@@ -14,7 +14,7 @@ type Space struct {
 	Mastered  string                 //上级区域id
 	Master    []string               //下级区域
 	Devids    []primitive.ObjectID   //objectid
-	Params    map[string]interface{} //空间参数 对于最下面的大厅，有长宽高参数（height,length,width）
+	Params    map[string]interface{} //TODO 空间参数 对于最下面的大厅，有长宽高参数（height,length,width）
 	Level     int64                  //用于区分该房源所属的位置的级别，具体到哪个位置
 	Spacecode string
 	Title     string
