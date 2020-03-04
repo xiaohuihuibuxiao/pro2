@@ -19,17 +19,17 @@ type User struct {
 	External interface{}
 }
 
-func Loginauth(user, pwd string) (string, int64, error) {
+func LoginAuth(user, pwd string) (string, int64, error) {
 	if user == "" {
-		return "", CONST_PARAM_LACK, errors.New("userid can't be blank")
+		return "", CONST_PARAM_LACK, errors.New("userId can't be blank")
 	}
-	col_user := Client.Database("test").Collection("user")
-	var userinfo *User
-	err := col_user.FindOne(context.Background(), bson.M{"userid": user}).Decode(&userinfo)
+	colUser := Client.Database("isms").Collection("user")
+	var userInfo *User
+	err := colUser.FindOne(context.Background(), bson.M{"userid": user}).Decode(&userInfo)
 	if err != nil {
 		return "", CONST_USER_NOTEXIST, err
 	}
-	if userinfo.Password != pwd {
+	if userInfo.Password != pwd {
 		return "", CONST_USERPWD_UNMATCH, errors.New("please check your userid or password !")
 	}
 	//TODO 需要用新的生成topken函数

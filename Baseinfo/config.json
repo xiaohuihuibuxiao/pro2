@@ -1,21 +1,6 @@
 {
-  
-"addr":"mongodb://47.100.44.103:27017",
- 
- "mongo":{
-
-    "authsource":"admin",
-  
-  "username":"coderhuang",
- 
-   "password":"123456"
- 
-   } ,
-
- "expiredtime":3600,
- "note":"bee run调试，解析json没问题，但是项目启动时，json解释失败，提示unexpected end of json input(未解决)",
- "note":"文档修改时,接口要像接口文档那样描述清楚，输入输出示例，添加获取子空间的接口（在查询某空间时直接附上）",
- "note":"子空间信息可以么？，加上复制空白区域的接口（比如工位需要批量复制），然后要有给空的空间添加传感器的接口",
- "note":"同一个类型的接口，可以通过方法不同来区分，不必在url上写各种不同的，比较浪费",
- "note":"token里的用户和接口涉及的设备的用户是否一致的判定（还没做）"
+"mgoaddr":"mongodb://47.100.44.103:27017",
+ "authsource":"admin",
+ "username":"coderhuang",
+ "password":"123456"
 }

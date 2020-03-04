@@ -2,6 +2,7 @@ package Services
 
 import (
 	"context"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
@@ -20,23 +21,25 @@ type CommonResponse struct {
 
 //--------登陆-----------
 type UserLoginRequest struct {
-	Userid   string `json:"Userid"`
-	Password string `json:"Password"`
+	UserId   string `json:"userId"`
+	Password string `json:"password"`
 	Method   string `json:"method"`
 	Url      string `json:"url"`
 }
 
 func UserLoginEndpoint(userloginService WUserLoginService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) { //TODO requesr数据内容哪来的
+	fmt.Println("登陆endpoint")
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		fmt.Println("登陆1111")
 		r := request.(*UserLoginRequest)
-		result := userloginService.Login(r.Userid, r.Password)
+		result := userloginService.Login(r.UserId, r.Password)
 		return result, nil
 	}
 }
 
 //--------创建新用户----------
 type UserCreateRequest struct {
-	Userid   string `json:"userid"`
+	UserId   string `json:"userId"`
 	Password string `json:"password"`
 	Phone    string `json:"phone"`
 	Email    string `json:"email"`
@@ -45,7 +48,7 @@ type UserCreateRequest struct {
 }
 
 func UserCreateEndpoint(userCreateService WUserCreateService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (response interface{}, err error) { //TODO requesr数据内容哪来的
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		r := request.(*UserCreateRequest)
 		result := userCreateService.NewAccount(r)
 		return result, nil
@@ -73,13 +76,14 @@ type CommonLogger struct {
 
 //登陆日志中间件
 func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
+	fmt.Println("进入登陆日志中间件")
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		fmt.Println("登陆中间件00000")
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			//	r := request.(UserRequest)
+			fmt.Println("00000")
 			r := request.(*UserLoginRequest)
-
 			if r.Method != "GET" {
-				Baseinfo.RecordOperation(r.Url, r.Method, r.Userid)
+				Baseinfo.RecordOperation(r.Url, r.Method, r.UserId)
 			}
 
 			_ = logger.Log("method", r.Method, "url", r.Url)
@@ -103,20 +107,19 @@ func CheckTokenMiddleware() endpoint.Middleware {
 			} else {
 				return nil, util.NewMyError(403, "error token")
 			}
-
 		}
 	}
 }
 
 //--------获取用户列表----------
 type UserListRequest struct {
+	UserId string `json:"userId"`
 }
 
 func UserListEndpoint(userListService WUserListService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		//r := request.(*UserListRequest)
-		//fmt.Println("接收到的r为",r)
-		result := userListService.ObtainUserList()
+		r := request.(*UserListRequest)
+		result := userListService.ObtainUserList(r.UserId)
 		return result, nil
 	}
 }

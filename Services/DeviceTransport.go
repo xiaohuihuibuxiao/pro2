@@ -32,9 +32,9 @@ func DecodeDeviceCreateRequest(ctx context.Context, r *http.Request) (interface{
 	}
 	return &DeviceCreateRequest{
 		Token:    token,
-		Deviceid: deviceid,
-		Isnode:   newdevice.Isnode,
-		Devtype:  newdevice.Devtype,
+		DeviceId: deviceid,
+		IsNode:   newdevice.Isnode,
+		DevType:  newdevice.Devtype,
 		Title:    newdevice.Title,
 	}, nil
 
@@ -169,6 +169,19 @@ func DecodeDeviceUploadRequest(ctx context.Context, r *http.Request) (interface{
 }
 
 func EncodeDeviceUploadReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
+
+//----------传感器列表--------
+//TODO unfinished
+func DecodeDeviceListRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	return &DeviceListRequest{
+		Token: r.Header.Get("token"),
+	}, nil
+}
+
+func EncodeDeviceReponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }

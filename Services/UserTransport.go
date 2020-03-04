@@ -3,57 +3,57 @@ package Services
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"pro2/Baseinfo"
 	"pro2/util"
 )
 
 //------------------登陆---------------------------------
 func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-
+	fmt.Println("解码")
 	body, _ := ioutil.ReadAll(r.Body)
-	var bodyinfo struct {
-		Userid   string `json:"Userid"`
-		Password string `json:"Password"`
+	var info struct {
+		UserId   string `json:"userId"`
+		Password string `json:"password"`
 	}
-	json.Unmarshal(body, &bodyinfo)
-	password := bodyinfo.Password
+	_ = json.Unmarshal(body, &info)
 	return &UserLoginRequest{
-		Userid:   bodyinfo.Userid,
-		Password: password,
+		UserId:   info.UserId,
+		Password: info.Password,
 		Method:   r.Method,
 		Url:      r.URL.String(),
 	}, nil
 }
 
 func EncodeuUserLoginResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	fmt.Println("编码")
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }
 
 //----------------新建用户----------
 func DecodeUserCreateRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-
 	body, _ := ioutil.ReadAll(r.Body)
 	var newuser struct {
-		Userid   string `json:"userid"`
+		UserId   string `json:"userId"`
 		Password string `json:"password"`
 		Phone    string `json:"phone"`
 		Email    string `json:"email"`
 		Title    string `json:"title"`
 		Nickname string `json:"nickname"`
 	}
-	json.Unmarshal(body, &newuser)
-	a := &UserCreateRequest{
-		Userid:   newuser.Userid,
+	_ = json.Unmarshal(body, &newuser)
+	return &UserCreateRequest{
+		UserId:   newuser.UserId,
 		Password: newuser.Password,
 		Phone:    newuser.Phone,
 		Email:    newuser.Email,
 		Title:    newuser.Title,
 		Nickname: newuser.Nickname,
-	}
-	return a, nil
+	}, nil
 }
 
 func EncodeuUserCreateResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
@@ -75,27 +75,15 @@ func MyErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 }
 
 //------------------获取用户列表-------------------------
-//TODO 函数的实现
 func DecodeUserListRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-
-	//var userid string = ""
-	//vars := mymux.Vars(r)
-	//if user, ok := vars["userid"]; ok {
-	//	userid = user
-	//}
-	//body, _ := ioutil.ReadAll(r.Body)
-	//var bodyinfo struct {
-	//	Password string `json:"password"`
-	//}
-	//json.Unmarshal(body, &bodyinfo)
-	//password := bodyinfo.Password
-	//a := &UserLoginRequest{
-	//	Userid:   userid,
-	//	Password: password,
-	//	Method:   r.Method,
-	//	Url:      r.URL.String(),
-	//}
-	return nil, nil
+	token := r.Header.Get("token")
+	ok, err, user := Baseinfo.TokenCheckAsymmetricalKey(token)
+	if !ok {
+		return nil, err
+	}
+	return &UserListRequest{
+		UserId: user,
+	}, nil
 }
 
 //------------------编辑用户-------------------------

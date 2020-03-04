@@ -119,7 +119,7 @@ func TokenGen_asymmetricalkey(userid string) (string, error) {
 		return "", err
 	}
 	user := UserClaim{Uname: userid}
-	user.ExpiresAt = time.Now().Add(time.Duration(Expiredtime) * time.Second).Unix() //TODO 在config中配置
+	user.ExpiresAt = time.Now().Add(time.Duration(3600) * time.Second).Unix() //TODO 在config中配置
 	token_obj := jwt.NewWithClaims(jwt.SigningMethodRS256, user)
 	token, _ := token_obj.SignedString(priKey)
 
@@ -135,6 +135,37 @@ func TokenGen_asymmetricalkey(userid string) (string, error) {
 }
 
 func TokenCheck_asymmetricalkey(token string) (bool, error, string) {
+	pubKeyBytes, err := ioutil.ReadFile("./pem/public.pem")
+	if err != nil {
+		log.Fatal("公钥文件读取失败")
+		return false, err, ""
+	}
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyBytes)
+	if err != nil {
+		log.Fatal("公钥文件不正确")
+		return false, err, ""
+	}
+	uc := UserClaim{}
+	getToken, err := jwt.ParseWithClaims(token, &uc, func(token *jwt.Token) (i interface{}, e error) {
+		return pubKey, nil
+	})
+	if getToken != nil && getToken.Valid {
+	} else if ve, ok := err.(*jwt.ValidationError); ok {
+		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+			return false, errors.New("invalid token"), ""
+		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+
+			return false, errors.New("token is expired"), ""
+		} else {
+			return false, errors.New("Couldn't handle this token:" + err.Error()), ""
+		}
+	} else {
+		return false, errors.New("unresolved token err:" + err.Error()), ""
+	}
+	return true, nil, getToken.Claims.(*UserClaim).Uname
+}
+
+func TokenCheckAsymmetricalKey(token string) (bool, error, string) {
 	pubKeyBytes, err := ioutil.ReadFile("./pem/public.pem")
 	if err != nil {
 		log.Fatal("公钥文件读取失败")

@@ -3,6 +3,7 @@ package Services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -34,9 +35,9 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 		Id:        primitive.NewObjectIDFromTimestamp(time.Now()),
 		Userid:    "",
 		Gatewayid: "",
-		Deviceid:  r.Deviceid,
-		Isnode:    r.Isnode,
-		Devtype:   r.Devtype,
+		Deviceid:  r.DeviceId,
+		Isnode:    r.IsNode,
+		Devtype:   r.DevType,
 		Title:     r.Title,
 		Addr:      "",
 		Spacecode: "",
@@ -758,4 +759,21 @@ func (this DeviceUploadService) UploadData(r *DeviceUploadRequest) *CommonRespon
 	}
 	response.Code = Baseinfo.Success
 	return response
+}
+
+//--------传感器列表----------
+type WDeviceListService interface {
+	DeviceList(token string) *CommonResponse
+}
+
+type DeviceListService struct{}
+
+func (this DeviceListService) DeviceList(token string) *CommonResponse {
+	fmt.Println("进入传感器列表接口", token)
+	return &CommonResponse{
+		Code:   0,
+		Msg:    "",
+		Data:   nil,
+		Expand: nil,
+	}
 }

@@ -8,9 +8,9 @@ import (
 //--新建设备--
 type DeviceCreateRequest struct {
 	Token    string `json:"token"`
-	Deviceid string `json:"deviceid"`
-	Isnode   bool   `json:"isnode"`
-	Devtype  int64  `json:"devtype"`
+	DeviceId string `json:"deviceId"`
+	IsNode   bool   `json:"IsNode"`
+	DevType  int64  `json:"devType"`
 	Title    string `json:"title"`
 }
 
@@ -112,6 +112,20 @@ func DeviceUploadEndpoint(deviceuploadservice WDeviceUploadService) endpoint.End
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		r := request.(*DeviceUploadRequest)
 		result := deviceuploadservice.UploadData(r)
+		return result, nil
+	}
+}
+
+//-------------传感器列表-------------------
+
+type DeviceListRequest struct {
+	Token string `json:"token"`
+}
+
+func DeviceListEndpoint(deviceListService WDeviceListService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+		r := request.(*DeviceListRequest)
+		result := deviceListService.DeviceList(r.Token)
 		return result, nil
 	}
 }

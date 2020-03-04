@@ -36,7 +36,7 @@ func Init() *mymux.Router {
 	//httptransport.NewServer(UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{})), DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
 
 	// /isms.v1
-	userListHandler := httptransport.NewServer(UserListEndpoint(UserListService{}), DecodeUserListRequest, EncodeuUserResponse)
+	userListHandler := httptransport.NewServer(CheckTokenMiddleware()(UserListEndpoint(UserListService{})), DecodeUserListRequest, EncodeuUserResponse)
 	userCreateHandler := httptransport.NewServer(UserCreateEndpoint(UserCreateService{}), DecodeUserCreateRequest, EncodeuUserResponse)
 	userEditHandler := httptransport.NewServer(UserEditEndpoint(UserEditService{}), DecodeUserEditRequest, EncodeuUserResponse)
 	userDelHandler := httptransport.NewServer(UserDelEndpoint(UserDelService{}), DecodeUserDelRequest, EncodeuUserResponse)
@@ -44,24 +44,26 @@ func Init() *mymux.Router {
 	userLoginHandler := httptransport.NewServer(RateLimit(limit)(UserServiceLogMiddleware(logger)(UserLoginEndpoint(UserLoginService{}))), DecodeUserLoginRequest, EncodeuUserLoginResponse)
 	userLogoutHandler := httptransport.NewServer(UserLogoutEndpoint(UserLogoutService{}), DecodeUserLogoutRequest, EncodeuUserResponse)
 
-	r.Methods("GET").Path(`/isms/v1/user`).Handler(userListHandler)              //--3.1.1获取用户列表
-	r.Methods("POST").Path(`/isms/v1/user`).Handler(userCreateHandler)           //--3.1.2创建用户
+	r.Methods("GET").Path(`/isms/v1/user`).Handler(userListHandler)              //--3.1.1获取用户列表  ok
+	r.Methods("POST").Path(`/isms/v1/user`).Handler(userCreateHandler)           //--3.1.2创建用户  ok
 	r.Methods("PUT").Path(`/isms/v1/user/{userid}`).Handler(userEditHandler)     //--3.1.3编辑用户
 	r.Methods("DELETE").Path(`/isms/v1/user/{userid}`).Handler(userDelHandler)   //--3.1.4删除用户
 	r.Methods("DELETE").Path(`/isms/v1/user/resetpwd`).Handler(userResetHandler) //--3.1.5 更改用户密码
-	r.Methods("POST").Path(`/isms/v1//user/login`).Handler(userLoginHandler)     //--3.1.6 用户登陆
+	r.Methods("POST").Path(`/isms/v1/user/login`).Handler(userLoginHandler)      //--3.1.6 用户登陆  ok
 	r.Methods("POST").Path(`/isms/v1//user/logout`).Handler(userLogoutHandler)   //--3.1.6 用户注销
 
 	//-----设备相关----
-	devicecreate_handler := httptransport.NewServer(DeviceCreateEndpoint(DeviceCreateService{}), DecodeDeviceCreateRequest, EncodeDeviceCreateReponse)
-	devicedelete_handler := httptransport.NewServer(DeviceDeleteEndpoint(DeviceDeleteService{}), DecodeDeviceDeleteRequest, EncodeDeviceDeleteReponse)
-	devicequery_handler := httptransport.NewServer(DeviceQueryEndpoint(DeviceQUeryService{}), DecodeDeviceQueryRequest, EncodeDeviceQueryReponse)
-	devicerevise_handler := httptransport.NewServer(DeviceReviseEndpoint(DeviceReviseService{}), DecodeDeviceReviseRequest, EncodeDeviceReviseReponse)
-	devicebind_handler := httptransport.NewServer(DeviceBindEndpoint(DeviceBindService{}), DecodeDeviceBindRequest, EncodeDeviceBindReponse)
-	deviceunbound_handler := httptransport.NewServer(DeviceUnboundEndpoint(DeviceUnboundService{}), DecodeDeviceUnboundRequest, EncodeDeviceUnboundReponse)
-	deviceupload_handler := httptransport.NewServer(DeviceUploadEndpoint(DeviceUploadService{}), DecodeDeviceUploadRequest, EncodeDeviceUploadReponse)
+	deviceListandler := httptransport.NewServer(DeviceListEndpoint(DeviceListService{}), DecodeDeviceListRequest, EncodeDeviceReponse) //--3.3.1传感器列表
+	deviceCreateHandler := httptransport.NewServer(DeviceCreateEndpoint(DeviceCreateService{}), DecodeDeviceCreateRequest, EncodeDeviceReponse)
+	devicedelete_handler := httptransport.NewServer(DeviceDeleteEndpoint(DeviceDeleteService{}), DecodeDeviceDeleteRequest, EncodeDeviceReponse)
+	devicequery_handler := httptransport.NewServer(DeviceQueryEndpoint(DeviceQUeryService{}), DecodeDeviceQueryRequest, EncodeDeviceReponse)
+	devicerevise_handler := httptransport.NewServer(DeviceReviseEndpoint(DeviceReviseService{}), DecodeDeviceReviseRequest, EncodeDeviceReponse)
+	devicebind_handler := httptransport.NewServer(DeviceBindEndpoint(DeviceBindService{}), DecodeDeviceBindRequest, EncodeDeviceReponse)
+	deviceunbound_handler := httptransport.NewServer(DeviceUnboundEndpoint(DeviceUnboundService{}), DecodeDeviceUnboundRequest, EncodeDeviceReponse)
+	deviceupload_handler := httptransport.NewServer(DeviceUploadEndpoint(DeviceUploadService{}), DecodeDeviceUploadRequest, EncodeDeviceReponse)
 
-	r.Methods("POST").Path(`/device/{deviceid}`).Handler(devicecreate_handler)                              //---新建设备---ok
+	r.Methods("GET").Path(`/isms/v1/device`).Handler(deviceListandler)                                      //---新建设备---ok
+	r.Methods("POST").Path(`/isms/v1/device`).Handler(deviceCreateHandler)                                  //---新建设备---ok
 	r.Methods("DELETE").Path(`/device/{deviceid}`).Handler(devicedelete_handler)                            //--删除设备--ok
 	r.Methods("GET").Path(`/device/{deviceid}`).Handler(devicequery_handler)                                //---查询设备--ok
 	r.Methods("PUT").Path(`/device/{deviceid}`).Handler(devicerevise_handler)                               //--修改设备--ok
