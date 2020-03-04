@@ -63,7 +63,7 @@ func Authtoken(tokenString string) (bool, error, string) {
 }
 
 //登陆接口中校验token的方法
-func Logintokenauth(token string) (error, string) {
+func LoginTokenAuth(token string) (error, string) {
 	if token == "" {
 		return errors.New("lack of token"), ""
 	}

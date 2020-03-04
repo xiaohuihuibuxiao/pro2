@@ -22,7 +22,7 @@ func (this SpaceCreateService) NewSpace(r *SpaceCreateRequest) *CommonResponse {
 	colDic := Baseinfo.Client.Database("test").Collection("dictionary")
 	colDis := Baseinfo.Client.Database("test").Collection("district")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -145,7 +145,7 @@ func (this SpaceQueryService) QuerySpace(r *SpaceQueryRequest) *CommonResponse {
 	response := &CommonResponse{}
 	colSpace := Baseinfo.Client.Database("test").Collection("space")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -202,7 +202,7 @@ func (this SpaceReviseService) ReviseSapce(r *SpaceReviseRequest) *CommonRespons
 	response := &CommonResponse{}
 	colSpace := Baseinfo.Client.Database("test").Collection("space")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -281,7 +281,7 @@ func (this SpaceDelService) DelSapce(r *SpaceDelRequest) *CommonResponse {
 	response := &CommonResponse{}
 	colSpace := Baseinfo.Client.Database("test").Collection("space")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -362,7 +362,7 @@ func (this SpaceCloneService) CloneSpace(r *SpaceCloneRequest) *CommonResponse {
 	colDis := Baseinfo.Client.Database("test").Collection("district")
 	colDic := Baseinfo.Client.Database("test").Collection("dictionary")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()

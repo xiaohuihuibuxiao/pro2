@@ -3,7 +3,6 @@ package Services
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	mymux "github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 
 //------------------登陆---------------------------------
 func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	fmt.Println("解码")
 	body, _ := ioutil.ReadAll(r.Body)
 	var info struct {
 		UserId   string `json:"userId"`
@@ -29,7 +27,6 @@ func DecodeUserLoginRequest(ctx context.Context, r *http.Request) (interface{}, 
 }
 
 func EncodeuUserLoginResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	fmt.Println("编码")
 	w.Header().Set("Content-type", "application/json")
 	return json.NewEncoder(w).Encode(response)
 }
@@ -46,19 +43,19 @@ func DecodeUserCreateRequest(ctx context.Context, r *http.Request) (interface{},
 		Nickname string `json:"nickname"`
 	}
 	_ = json.Unmarshal(body, &newuser)
-	return &UserCreateRequest{
-		UserId:   newuser.UserId,
-		Password: newuser.Password,
-		Phone:    newuser.Phone,
-		Email:    newuser.Email,
-		Title:    newuser.Title,
-		Nickname: newuser.Nickname,
+	return &CommonRequest{
+		Token:  r.Header.Get("token"),
+		Method: r.Method,
+		Url:    r.URL.String(),
+		Msg: &UserCreateRequest{
+			UserId:   newuser.UserId,
+			Password: newuser.Password,
+			Phone:    newuser.Phone,
+			Email:    newuser.Email,
+			Title:    newuser.Title,
+			Nickname: newuser.Nickname,
+		},
 	}, nil
-}
-
-func EncodeuUserCreateResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-type", "application/json")
-	return json.NewEncoder(w).Encode(response)
 }
 
 //------------------邪恶的分割线-----------------
@@ -81,14 +78,19 @@ func DecodeUserListRequest(ctx context.Context, r *http.Request) (interface{}, e
 	if !ok {
 		return nil, err
 	}
-	return &UserListRequest{
-		UserId: user,
+	return &CommonRequest{
+		Token:  r.Header.Get("token"),
+		Method: r.Method,
+		Url:    r.URL.String(),
+		Msg: &UserListRequest{
+			UserId: user,
+		},
 	}, nil
 }
 
 //------------------编辑用户-------------------------
 func DecodeUserEditRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	var userid string = ""
+	var userid = ""
 	vars := mymux.Vars(r)
 	if user, ok := vars["userid"]; ok {
 		userid = user
@@ -101,12 +103,17 @@ func DecodeUserEditRequest(ctx context.Context, r *http.Request) (interface{}, e
 		Email    string `json:"Email"`
 	}
 	_ = json.Unmarshal(body, &bodyinfo)
-	return &UserEditRequest{
-		Userid:   userid,
-		Phone:    bodyinfo.Phone,
-		Title:    bodyinfo.Title,
-		Nickname: bodyinfo.Nickname,
-		Email:    bodyinfo.Email,
+	return &CommonRequest{
+		Token:  r.Header.Get("token"),
+		Method: r.Method,
+		Url:    r.URL.String(),
+		Msg: &UserEditRequest{
+			UserId:   userid,
+			Phone:    bodyinfo.Phone,
+			Title:    bodyinfo.Title,
+			Nickname: bodyinfo.Nickname,
+			Email:    bodyinfo.Email,
+		},
 	}, nil
 }
 
@@ -117,24 +124,33 @@ func DecodeUserDelRequest(ctx context.Context, r *http.Request) (interface{}, er
 	if user, ok := vars["userid"]; ok {
 		userid = user
 	}
-	return &UserDelRequest{
-		Userid: userid,
+	return &CommonRequest{
+		Token:  r.Header.Get("token"),
+		Method: r.Method,
+		Url:    r.URL.String(),
+		Msg: &UserDelRequest{
+			UserId: userid,
+		},
 	}, nil
 }
 
 //------------------修改用户密码-------------------------
 func DecodeUserResetRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	body, _ := ioutil.ReadAll(r.Body)
-	var bodyinfo struct {
-		Userid           string `json:"Userid"`
-		Originalpassword string `json:"Originalpassword"`
-		Newpassword      string `json:"Newpassword"`
+	var info struct {
+		UserId           string `json:"userId"`
+		OriginalPassword string `json:"originalPassword"`
+		NewPassword      string `json:"newPassword"`
 	}
-	_ = json.Unmarshal(body, &bodyinfo)
-	return &UserResetRequest{
-		Userid:           bodyinfo.Userid,
-		Originalpassword: bodyinfo.Originalpassword,
-		Newpassword:      bodyinfo.Newpassword,
+	_ = json.Unmarshal(body, &info)
+	return &CommonRequest{
+		Token:  r.Header.Get("token"),
+		Method: r.Method,
+		Url:    r.URL.String(),
+		Msg: &UserResetRequest{
+			UserId:      info.UserId,
+			NewPassword: info.NewPassword,
+		},
 	}, nil
 }
 

@@ -2,8 +2,6 @@ package Services
 
 import (
 	"context"
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"golang.org/x/time/rate"
@@ -19,6 +17,13 @@ type CommonResponse struct {
 	Expand interface{} `json:"expand"`
 }
 
+type CommonRequest struct {
+	Token  string      `json:"token"`
+	Method string      `json:"method"`
+	Url    string      `json:"url"`
+	Msg    interface{} `json:"msg"`
+}
+
 //--------登陆-----------
 type UserLoginRequest struct {
 	UserId   string `json:"userId"`
@@ -28,9 +33,7 @@ type UserLoginRequest struct {
 }
 
 func UserLoginEndpoint(userloginService WUserLoginService) endpoint.Endpoint {
-	fmt.Println("登陆endpoint")
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		fmt.Println("登陆1111")
 		r := request.(*UserLoginRequest)
 		result := userloginService.Login(r.UserId, r.Password)
 		return result, nil
@@ -49,13 +52,13 @@ type UserCreateRequest struct {
 
 func UserCreateEndpoint(userCreateService WUserCreateService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		r := request.(*UserCreateRequest)
-		result := userCreateService.NewAccount(r)
+		r := request.(*CommonRequest)
+		result := userCreateService.NewAccount(r.Msg.(*UserCreateRequest))
 		return result, nil
 	}
 }
 
-//---------------------midware---------------------
+//---------------------middleware---------------------
 //加入限流功能的 中间件
 func RateLimit(limit *rate.Limiter) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
@@ -76,11 +79,8 @@ type CommonLogger struct {
 
 //登陆日志中间件
 func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
-	fmt.Println("进入登陆日志中间件")
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		fmt.Println("登陆中间件00000")
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			fmt.Println("00000")
 			r := request.(*UserLoginRequest)
 			if r.Method != "GET" {
 				Baseinfo.RecordOperation(r.Url, r.Method, r.UserId)
@@ -96,17 +96,14 @@ func UserServiceLogMiddleware(logger log.Logger) endpoint.Middleware {
 func CheckTokenMiddleware() endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-			r := request.(CommonLogger)
-			uc := UserClaim{}
-			getToken, err := jwt.ParseWithClaims(r.Token, &uc, func(token *jwt.Token) (i interface{}, e error) {
-				return []byte(secKey), nil
-			})
-			if getToken != nil && getToken.Valid { //验证通过
-				newCtx := context.WithValue(ctx, "LoginUser", getToken.Claims.(*UserClaim).Uname)
-				return next(newCtx, request)
-			} else {
+			r := request.(*CommonRequest)
+			err, user0 := Baseinfo.LoginTokenAuth(r.Token)
+			if err != nil {
 				return nil, util.NewMyError(403, "error token")
+
 			}
+			newCtx := context.WithValue(ctx, "LoginUser", user0)
+			return next(newCtx, request)
 		}
 	}
 }
@@ -118,53 +115,52 @@ type UserListRequest struct {
 
 func UserListEndpoint(userListService WUserListService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		r := request.(*UserListRequest)
-		result := userListService.ObtainUserList(r.UserId)
+		r := request.(*CommonRequest)
+		result := userListService.ObtainUserList(r.Msg.(*UserListRequest).UserId)
 		return result, nil
 	}
 }
 
 //--------编辑用户----------
 type UserEditRequest struct {
-	Userid   string `json:"userid"`
-	Phone    string `json:"Phone"`
-	Title    string `json:"Title"`
-	Nickname string `json:"Nickname"`
-	Email    string `json:"Email"`
+	UserId   string `json:"userId"`
+	Phone    string `json:"phone"`
+	Title    string `json:"title"`
+	Nickname string `json:"nickname"`
+	Email    string `json:"email"`
 }
 
 func UserEditEndpoint(userEditService WUserEditService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		r := request.(*UserEditRequest)
-		result := userEditService.UserEdit(r)
+		r := request.(*CommonRequest)
+		result := userEditService.UserEdit(r.Msg.(*UserEditRequest), r.Token)
 		return result, nil
 	}
 }
 
 //--------删除用户----------
 type UserDelRequest struct {
-	Userid string `json:"userid"`
+	UserId string `json:"userId"`
 }
 
 func UserDelEndpoint(userDelService WUserDelService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		r := request.(*UserDelRequest)
-		result := userDelService.UserDel(r.Userid)
+		r := request.(*CommonRequest)
+		result := userDelService.UserDel(r.Msg.(*UserDelRequest).UserId, r.Token)
 		return result, nil
 	}
 }
 
 //--------修改用户密码----------
 type UserResetRequest struct {
-	Userid           string `json:"Userid"`
-	Originalpassword string `json:"Originalpassword"`
-	Newpassword      string `json:"Newpassword"`
+	UserId      string `json:"userId"`
+	NewPassword string `json:"newPassword"`
 }
 
 func UserResetEndpoint(userResetService WUserResetService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
-		r := request.(*UserResetRequest)
-		result := userResetService.UserReset(r)
+		r := request.(*CommonRequest)
+		result := userResetService.UserReset(r.Msg.(*UserResetRequest), r.Token)
 		return result, nil
 	}
 }

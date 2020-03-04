@@ -23,7 +23,7 @@ func (this DeviceCreateService) NewDevice(r *DeviceCreateRequest) *CommonRespons
 	response := &CommonResponse{}
 
 	token := r.Token
-	errChecktoken, _ := Baseinfo.Logintokenauth(token)
+	errChecktoken, _ := Baseinfo.LoginTokenAuth(token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -91,7 +91,7 @@ func (this DeviceQUeryService) QUeryDevice(r *DeviceQueryRequest) *CommonRespons
 	response := &CommonResponse{}
 	colDevice := Baseinfo.Client.Database("test").Collection("device")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -147,7 +147,7 @@ func (this DeviceDeleteService) DeleteDevice(r *DeviceDeleteRequest) *CommonResp
 	colDevice := Baseinfo.Client.Database("test").Collection("device")
 	colSpace := Baseinfo.Client.Database("test").Collection("space")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -257,7 +257,7 @@ func (this DeviceReviseService) ReviseDevice(r *DeviceReviseRequest) *CommonResp
 	response := &CommonResponse{}
 	colDevice := Baseinfo.Client.Database("test").Collection("device")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -358,7 +358,7 @@ func (this DeviceBindService) BindDevice(r *DeviceBindRequest) *CommonResponse {
 	colDevice := Baseinfo.Client.Database("test").Collection("device")
 	colSpace := Baseinfo.Client.Database("test").Collection("space")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
@@ -582,7 +582,7 @@ func (this DeviceUnboundService) UnboundDevice(r *DeviceUnboundRequest) *CommonR
 	colDevice := Baseinfo.Client.Database("test").Collection("device")
 	colSpace := Baseinfo.Client.Database("test").Collection("space")
 
-	errChecktoken, tokenuser := Baseinfo.Logintokenauth(r.Token)
+	errChecktoken, tokenuser := Baseinfo.LoginTokenAuth(r.Token)
 	if errChecktoken != nil {
 		response.Code = Baseinfo.CONST_TOEKN_INVALID
 		response.Msg = errChecktoken.Error()
