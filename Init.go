@@ -62,7 +62,7 @@ func Init() *mymux.Router {
 	deviceunbound_handler := httptransport.NewServer(DeviceUnboundEndpoint(DeviceUnboundService{}), DecodeDeviceUnboundRequest, EncodeDeviceReponse)
 	deviceupload_handler := httptransport.NewServer(DeviceUploadEndpoint(DeviceUploadService{}), DecodeDeviceUploadRequest, EncodeDeviceReponse)
 
-	r.Methods("GET").Path(`/isms/v1/device`).Handler(deviceListandler)                                      //---新建设备---ok
+	r.Methods("GET").Path(`/isms/v1/device`).Handler(deviceListandler)                                      //---查询全部（部分）设备---ok
 	r.Methods("POST").Path(`/isms/v1/device`).Handler(deviceCreateHandler)                                  //---新建设备---ok
 	r.Methods("DELETE").Path(`/device/{deviceid}`).Handler(devicedelete_handler)                            //--删除设备--ok
 	r.Methods("GET").Path(`/device/{deviceid}`).Handler(devicequery_handler)                                //---查询设备--ok
