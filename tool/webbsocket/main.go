@@ -16,8 +16,12 @@ type msg struct {
 }
 
 //var addr = flag.String("addr", "47.100.44.103:14141", "http service address")
+//var addr = flag.String("addr", "192.168.9.63:9090", "http service address")
 //var addr = flag.String("addr", "localhost:9090", "http service address")
-var addr = flag.String("addr", "47.100.44.103:9090", "http service address")
+//var addr = flag.String("addr", "172.18.0.216:9090", "http service address")
+var addr = flag.String("addr", "wufangjun.51vip.biz:8000", "http service address")
+
+//var addr = flag.String("addr", "47.100.44.103:9090", "http service address")
 
 func main() {
 	u := url.URL{
@@ -89,12 +93,7 @@ func Send2(ws *websocket.Conn) {
 	for {
 		i++
 		fmt.Println("send i", i)
-		//if i>5&&i<20{
-		//	fmt.Println("暂时不发")
-		//	time.Sleep(1*time.Second)
-		//	continue
-		//}
-		time.Sleep(30 * time.Second)
+		time.Sleep(20 * time.Second)
 		data := Message{
 			MsgType: "ping",
 			Data:    "heartbeat",
